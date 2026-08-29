@@ -6,7 +6,7 @@
 class MCP
 {
 public:
-    static QString GetPrompt(QString PromptPath);
+    static QString GetPrompt();
     static void SaveMessage(qint64 userid, QString userprompt, QString airesp);
     static QString GetOldMessages(qint64 userid);
 };

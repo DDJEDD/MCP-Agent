@@ -264,7 +264,7 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
     QString aiHost = "generativelanguage.googleapis.com";
     QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
 
-    QString final = MCP::GetPrompt("soul") + MCP::GetPrompt("system_prompt") + MCP::GetPrompt("style") + MCP::GetPrompt("stickers") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
+    QString final = MCP::GetPrompt() + "\nHISTORY:" + MCP::GetOldMessages(chatId);
     textwithoutnum finaluserText = phone->HideNumbers(userText);
     QString fullContextText = final + "\n" + finaluserText.usertext;
 

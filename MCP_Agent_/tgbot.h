@@ -19,7 +19,7 @@ class TgBot : public QObject
     Q_OBJECT
     Requests *requests;
     phonenumber *phone;
-    QString token = "7948767144:AAEo6nHvcKLZ1a7LwCI1lVwJ32-7QtTYq4E";
+    QString token = "8979215541:AAGMuBOHM81rE3y8R-iK7wsFuAGfTy4ckXI";
     QString geminiKey = qgetenv("GEMINI_KEY");
 
     QString host  = "api.telegram.org";
