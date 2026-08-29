@@ -1,0 +1,44 @@
+#ifndef TGBOT_H
+#define TGBOT_H
+#include <QCoreApplication>
+#include <QSslSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QDebug>
+#include <QObject>
+#include "requests.h"
+#include "phonenumber.h"
+#include <QMap>
+struct DelayedMessage {
+    QString text;
+    int delay;
+};
+class TgBot : public QObject
+{
+    Q_OBJECT
+    Requests *requests;
+    phonenumber *phone;
+    QString token = "7948767144:AAEo6nHvcKLZ1a7LwCI1lVwJ32-7QtTYq4E";
+    QString geminiKey = qgetenv("GEMINI_KEY");
+
+    QString host  = "api.telegram.org";
+    qint64 offset = 0;
+
+    void poll();
+    void checkreqPhoto(const QJsonObject &response, qint64 chatId, const QString &text);
+    void reqPhotoAI(const QString &userText, qint64 chatId);
+    void sendSticker(qint64 chatId, const QString &stickerId);
+    void sendMessagesDelayed(qint64 chatId,const QList<DelayedMessage> &messages);
+    void sendTyping(qint64 chatId);
+    void sendMessage(qint64 chatId, const QString &text);
+    void reqAI(const QString &userText, qint64 chatId, const QByteArray &imageData = QByteArray());
+    void checkreq(const QJsonObject &response, qint64 chatId, const QString &text, const QMap<QString, QString> &nums );
+    void processPhotoMessage(const QString &fileId, const QString &text, qint64 chatId);
+    void sendAnimation(qint64 chatId, const QString &animationUrl, const QString &caption);
+    void downloadFile(const QString &fileId, std::function<void(const QByteArray &)> callback);
+    void sendPhoto(qint64 chatId, const QString &photoUrl, const QString &caption);
+public:
+    explicit TgBot(QObject *parent = nullptr);
+};
+#endif // TGBOT_H
