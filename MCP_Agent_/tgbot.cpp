@@ -264,7 +264,7 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
     QString aiHost = "generativelanguage.googleapis.com";
     QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
 
-    QString final = MCP::GetPrompt() + "\nHISTORY:" + MCP::GetOldMessages(chatId);
+    QString final = MCP::GetPrompt("soul") + MCP::GetPrompt("system_prompt") + MCP::GetPrompt("style") + MCP::GetPrompt("stickers") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
     textwithoutnum finaluserText = phone->HideNumbers(userText);
     QString fullContextText = final + "\n" + finaluserText.usertext;
 
@@ -391,18 +391,18 @@ void TgBot::sendPhoto(qint64 chatId, const QString &photoUrl, const QString &cap
 
     requests->apiCall(this,host,path,body,{},[this, chatId, caption](const QJsonObject &resp) {
 
-            if (!resp.value("ok").toBool()) {
-                qWarning() << "sendPhoto failed:"
-                           << resp["description"].toString();
+        if (!resp.value("ok").toBool()) {
+            qWarning() << "sendPhoto failed:"
+                       << resp["description"].toString();
 
-                qWarning() << "Falling back to sending text message only...";
+            qWarning() << "Falling back to sending text message only...";
 
-                sendMessage(chatId, caption);
-            } else {
-                qDebug() << "Photo sent successfully!";
-            }
+            sendMessage(chatId, caption);
+        } else {
+            qDebug() << "Photo sent successfully!";
         }
-        );
+    }
+                      );
 }
 void TgBot::sendSticker(qint64 chatId, const QString &stickerId)
 {
@@ -414,12 +414,12 @@ void TgBot::sendSticker(qint64 chatId, const QString &stickerId)
     };
 
     requests->apiCall( this, host, path,body,{}, [](const QJsonObject &resp) {
-            if (!resp.value("ok").toBool()) {
-                qWarning() << "sendSticker failed:"
-                           << resp["description"].toString();
-            }
+        if (!resp.value("ok").toBool()) {
+            qWarning() << "sendSticker failed:"
+                       << resp["description"].toString();
         }
-        );
+    }
+                      );
 }
 void TgBot::sendTyping(qint64 chatId) {
     const QString path = QString("/bot%1/sendChatAction").arg(token);

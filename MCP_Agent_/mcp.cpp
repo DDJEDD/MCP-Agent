@@ -4,8 +4,8 @@
 #include <QJsonObject>
 
 
-QString MCP::GetPrompt(){
-    QFile promptfile("prompt.md");
+QString MCP::GetPrompt(QString promptPath){
+    QFile promptfile(promptPath + ".md");
     if (!promptfile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Could not open file for reading:" << promptfile.errorString();
         return "";
