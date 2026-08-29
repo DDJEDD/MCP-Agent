@@ -151,8 +151,11 @@ public:
     bool hasSubagent(const QString &id) const;
     QStringList subagentIds() const;
 
+public slots:
+    void receiveAgentReply(const QString &agentId, const QString &text);
+
 signals:
-    void messageSubmitted(const QString &agentId, const QString &text);
+    void messageSubmitted(const QString &agentId, const QString &promptName, const QString &text);
     void addSubagentRequested();
     void subagentSelected(const QString &id);
     void mainAgentSelected();
@@ -217,6 +220,7 @@ private:
 
     QMap<QString, SubagentCard *> m_cards;
     QMap<QString, QList<ChatEntry>> m_histories;
+    QMap<QString, QString> m_agentFolderNames;
     QString m_activeAgentId;
     QString m_mainAgentName;
     QString m_mainAgentRole;

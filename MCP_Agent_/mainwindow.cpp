@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "template_agents.h"
 
 #include <QLabel>
 #include <QLineEdit>
@@ -18,6 +19,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFontMetrics>
+#include <QDir>
 #include <utility>
 
 namespace {
@@ -322,6 +324,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     buildUi();
 
+    QDir agentsDir(QString(APP_SRC_DIR) + "/agents");
+    const QStringList existingAgents = agentsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &folderName : existingAgents) {
+        if (folderName == "main")
+            continue;
+        addSubagent(folderName);
+    }
+
     startTime.start();
     uptimeTimer = new QTimer(this);
     connect(uptimeTimer, &QTimer::timeout, this, &MainWindow::updateUptime);
@@ -622,6 +632,8 @@ QString MainWindow::addSubagent(const QString &name, const QString &role)
     const QString id = QString("agent-%1").arg(m_subagentSeq);
     const QString displayName = name.isEmpty() ? QString("Агент %1").arg(m_subagentSeq) : name;
 
+    template_agents::Generate(displayName);
+
     auto *card = new SubagentCard(id, displayName, subagentsScroll->widget());
     card->setRole(role);
 
@@ -632,6 +644,11 @@ QString MainWindow::addSubagent(const QString &name, const QString &role)
         removeSubagent(cardId);
     });
     connect(card, &SubagentCard::nameEdited, this, [this](const QString &cardId, const QString &newName) {
+        const QString oldName = m_agentFolderNames.value(cardId);
+        if (oldName != newName) {
+            template_agents::Rename(oldName, newName);
+            m_agentFolderNames.insert(cardId, newName);
+        }
         emit subagentRenamed(cardId, newName);
         if (cardId == m_activeAgentId)
             chatHeaderLabel->setText(newName);
@@ -640,6 +657,7 @@ QString MainWindow::addSubagent(const QString &name, const QString &role)
     subagentsLayout->insertWidget(subagentsLayout->count() - 1, card);
     m_cards.insert(id, card);
     m_histories.insert(id, {});
+    m_agentFolderNames.insert(id, displayName);
     subagentCountLabel->setText(QString::number(m_cards.size()));
 
     return id;
@@ -650,6 +668,7 @@ void MainWindow::removeSubagent(const QString &id)
     if (auto *card = m_cards.take(id)) {
         card->deleteLater();
         m_histories.remove(id);
+        m_agentFolderNames.remove(id);
         subagentCountLabel->setText(QString::number(m_cards.size()));
         if (m_activeAgentId == id)
             selectMainAgent();
@@ -885,6 +904,11 @@ void MainWindow::openSubagentSettings(const QString &id)
         return;
 
     const QString finalName = name.isEmpty() ? card->name() : name;
+    const QString oldName = m_agentFolderNames.value(id);
+    if (oldName != finalName) {
+        template_agents::Rename(oldName, finalName);
+        m_agentFolderNames.insert(id, finalName);
+    }
     setSubagentName(id, finalName);
     setSubagentRole(id, role);
     emit subagentRenamed(id, finalName);
@@ -898,8 +922,14 @@ void MainWindow::handleSendClicked()
         return;
 
     appendHistory(m_activeAgentId, text, true);
-    emit messageSubmitted(m_activeAgentId, text);
+    const QString promptName = m_activeAgentId.isEmpty() ? QStringLiteral("main") : m_agentFolderNames.value(m_activeAgentId);
+    emit messageSubmitted(m_activeAgentId, promptName, text);
     messageInput->clear();
+}
+
+void MainWindow::receiveAgentReply(const QString &agentId, const QString &text)
+{
+    appendHistory(agentId, text, false);
 }
 
 void MainWindow::updateUptime()

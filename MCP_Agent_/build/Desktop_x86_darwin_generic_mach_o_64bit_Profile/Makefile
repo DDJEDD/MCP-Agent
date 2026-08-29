@@ -14,7 +14,7 @@ EQ            = =
 
 CC            = /Library/Developer/CommandLineTools/usr/bin/clang
 CXX           = /Library/Developer/CommandLineTools/usr/bin/clang++
-DEFINES       = -DQT_QML_DEBUG -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
+DEFINES       = -DAPP_SRC_DIR=\"/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_\" -DQT_QML_DEBUG -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -g $(EXPORT_ARCH_ARGS) -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mmacosx-version-min=14.0 -Wall -Wextra $(DEFINES)
 CXXFLAGS      = -pipe -stdlib=libc++ -O2 -g -std=gnu++1z $(EXPORT_ARCH_ARGS) -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mmacosx-version-min=14.0 -Wall -Wextra $(DEFINES)
 INCPATH       = -I../../../MCP_Agent_ -I. -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/opt/homebrew/share/qt/mkspecs/macx-clang -F/opt/homebrew/lib
@@ -37,7 +37,7 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = MCP_Agent1.0.0
-DISTDIR = /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/.tmp/MCP_Agent1.0.0
+DISTDIR = /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/.tmp/MCP_Agent1.0.0
 LINK          = /Library/Developer/CommandLineTools/usr/bin/clang++
 LFLAGS        = -stdlib=libc++ -headerpad_max_install_names $(EXPORT_ARCH_ARGS) -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mmacosx-version-min=14.0 -Wl,-rpath,@executable_path/../Frameworks -Wl,-rpath,/opt/homebrew/lib
 LIBS          = $(SUBLIBS) -F/opt/homebrew/lib -framework QtWidgets -framework QtGui -framework AppKit -framework ImageIO -framework Metal -framework QtNetwork -framework QtCore -framework IOKit -framework DiskArbitration -framework UniformTypeIdentifiers -framework OpenGL   
@@ -58,6 +58,7 @@ SOURCES       = ../../config.cpp \
 		../../mcp.cpp \
 		../../phonenumber.cpp \
 		../../requests.cpp \
+		../../template_agents.cpp \
 		../../tgbot.cpp moc_mainwindow.cpp \
 		moc_tgbot.cpp
 OBJECTS       = config.o \
@@ -66,6 +67,7 @@ OBJECTS       = config.o \
 		mcp.o \
 		phonenumber.o \
 		requests.o \
+		template_agents.o \
 		tgbot.o \
 		moc_mainwindow.o \
 		moc_tgbot.o
@@ -414,6 +416,7 @@ DIST          = ../../prompt.md \
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		../../.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -451,12 +454,14 @@ DIST          = ../../prompt.md \
 		../../mcp.h \
 		../../phonenumber.h \
 		../../requests.h \
+		../../template_agents.h \
 		../../tgbot.h ../../config.cpp \
 		../../main.cpp \
 		../../mainwindow.cpp \
 		../../mcp.cpp \
 		../../phonenumber.cpp \
 		../../requests.cpp \
+		../../template_agents.cpp \
 		../../tgbot.cpp
 QMAKE_TARGET  = MCP_Agent
 DESTDIR       = 
@@ -466,12 +471,12 @@ TARGET        = MCP_Agent.app/Contents/MacOS/MCP_Agent
 EXPORT_QMAKE_MAC_SDK = macosx
 EXPORT_QMAKE_MAC_SDK_VERSION = 26.5
 EXPORT_QMAKE_XCODE_DEVELOPER_PATH = /Library/Developer/CommandLineTools
-EXPORT__QMAKE_STASH_ = 
+EXPORT__QMAKE_STASH_ = /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/.qmake.stash
 EXPORT_VALID_ARCHS = arm64
 EXPORT_DEFAULT_ARCHS = arm64
 EXPORT_ARCHS = $(filter $(EXPORT_VALID_ARCHS), $(if $(ARCHS), $(ARCHS), $(if $(EXPORT_DEFAULT_ARCHS), $(EXPORT_DEFAULT_ARCHS), $(EXPORT_VALID_ARCHS))))
 EXPORT_ARCH_ARGS = $(foreach arch, $(if $(EXPORT_ARCHS), $(EXPORT_ARCHS), $(EXPORT_VALID_ARCHS)), -arch $(arch))
-EXPORT__PRO_FILE_ = /Users/worker/Downloads/MCP_Agent_/MCP_Agent.pro
+EXPORT__PRO_FILE_ = /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/MCP_Agent.pro
 
 
 include /opt/homebrew/share/qt/mkspecs/features/mac/sdk.mk
@@ -481,7 +486,7 @@ first: all
 MCP_Agent.app/Contents/MacOS/MCP_Agent: ui_mainwindow.h $(OBJECTS)  
 	@test -d MCP_Agent.app/Contents/MacOS/ || mkdir -p MCP_Agent.app/Contents/MacOS/
 	$(LINK) $(LFLAGS) -o $(TARGET)  $(OBJECTS) $(OBJCOMP) $(LIBS)
-	mkdir -p /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF && dsymutil MCP_Agent.app/Contents/MacOS/MCP_Agent --flat -o MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent && strip -S MCP_Agent.app/Contents/MacOS/MCP_Agent
+	mkdir -p /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF && dsymutil MCP_Agent.app/Contents/MacOS/MCP_Agent --flat -o MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent && strip -S MCP_Agent.app/Contents/MacOS/MCP_Agent
 
 Makefile: ../../MCP_Agent.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf /opt/homebrew/share/qt/mkspecs/features/spec_pre.prf \
 		/opt/homebrew/share/qt/mkspecs/features/device_config.prf \
@@ -827,6 +832,7 @@ Makefile: ../../MCP_Agent.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.co
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -1210,6 +1216,7 @@ Makefile: ../../MCP_Agent.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.co
 /opt/homebrew/share/qt/mkspecs/features/qt_config.prf:
 /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf:
 /opt/homebrew/share/qt/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf:
 /opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf:
 /opt/homebrew/share/qt/mkspecs/features/toolchain.prf:
@@ -1273,8 +1280,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../../config.h ../../mainwindow.h ../../mcp.h ../../phonenumber.h ../../requests.h ../../tgbot.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../config.cpp ../../main.cpp ../../mainwindow.cpp ../../mcp.cpp ../../phonenumber.cpp ../../requests.cpp ../../tgbot.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../config.h ../../mainwindow.h ../../mcp.h ../../phonenumber.h ../../requests.h ../../template_agents.h ../../tgbot.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../../config.cpp ../../main.cpp ../../mainwindow.cpp ../../mcp.cpp ../../phonenumber.cpp ../../requests.cpp ../../template_agents.cpp ../../tgbot.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../../mainwindow.ui $(DISTDIR)/
 
 
@@ -1285,7 +1292,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) -r MCP_Agent.app
-	-$(DEL_FILE) /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist
+	-$(DEL_FILE) /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent .qmake.stash /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist
 	-$(DEL_FILE) Makefile
 
 
@@ -1316,12 +1323,14 @@ compiler_moc_header_clean:
 moc_mainwindow.cpp: ../../mainwindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFrame \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Downloads/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../mainwindow.h -o moc_mainwindow.cpp
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../mainwindow.h -o moc_mainwindow.cpp
 
 moc_tgbot.cpp: ../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QCoreApplication \
@@ -1338,7 +1347,7 @@ moc_tgbot.cpp: ../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
-	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Downloads/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../tgbot.h -o moc_tgbot.cpp
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../tgbot.h -o moc_tgbot.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -1369,8 +1378,10 @@ config.o: ../../config.cpp ../../config.h
 main.o: ../../main.cpp ../../mainwindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFrame \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
 		../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QCoreApplication \
@@ -1383,18 +1394,20 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../requests.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QApplication \
 		../../phonenumber.h \
-		/opt/homebrew/lib/QtCore.framework/Headers/QString \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel
+		/opt/homebrew/lib/QtCore.framework/Headers/QString
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../../main.cpp
 
 mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QFrame \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
 		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer \
 		/opt/homebrew/lib/QtCore.framework/Headers/QMap \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
 		/opt/homebrew/lib/QtCore.framework/Headers/QStringList \
 		ui_mainwindow.h \
-		/opt/homebrew/lib/QtWidgets.framework/Headers/QLabel \
+		../../template_agents.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHBoxLayout \
@@ -1406,7 +1419,10 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollBar \
 		/opt/homebrew/lib/QtGui.framework/Headers/QKeyEvent \
 		/opt/homebrew/lib/QtGui.framework/Headers/QMouseEvent \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialog \
+		/opt/homebrew/lib/QtWidgets.framework/Headers/QDialogButtonBox \
+		/opt/homebrew/lib/QtGui.framework/Headers/QFontMetrics
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../../mainwindow.cpp
 
 mcp.o: ../../mcp.cpp ../../mcp.h \
@@ -1435,6 +1451,14 @@ requests.o: ../../requests.cpp ../../requests.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QApplication
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o requests.o ../../requests.cpp
 
+template_agents.o: ../../template_agents.cpp ../../template_agents.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
+		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
+		/opt/homebrew/lib/QtCore.framework/Headers/QTextStream \
+		/opt/homebrew/lib/QtCore.framework/Headers/QMap
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o template_agents.o ../../template_agents.cpp
+
 tgbot.o: ../../tgbot.cpp ../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QCoreApplication \
 		/opt/homebrew/lib/QtNetwork.framework/Headers/QSslSocket \
@@ -1451,6 +1475,7 @@ tgbot.o: ../../tgbot.cpp ../../tgbot.h \
 		../../mcp.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTextStream \
+		../../template_agents.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpressionMatchIterator \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTimer
@@ -1477,7 +1502,7 @@ uninstall_target: FORCE
 
 install_debug_info_plist_target: first FORCE
 	@test -d $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents || mkdir -p $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents
-	$(QINSTALL) /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Info.plist
+	$(QINSTALL) /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Info.plist
 
 uninstall_debug_info_plist_target: FORCE
 	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Info.plist
@@ -1486,7 +1511,7 @@ uninstall_debug_info_plist_target: FORCE
 
 install_debug_info_target: first FORCE
 	@test -d $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Resources/DWARF || mkdir -p $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Resources/DWARF
-	$(QINSTALL) /Users/worker/Downloads/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent
+	$(QINSTALL) /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent
 
 uninstall_debug_info_target: FORCE
 	-$(DEL_FILE) -r $(INSTALL_ROOT)/opt/MCP_Agent/bin/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent

@@ -1,5 +1,6 @@
 #include "tgbot.h"
 #include "mcp.h"
+#include "template_agents.h"
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
@@ -7,6 +8,7 @@
 
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
+    template_agents::Generate("main");
     poll();
     phone = new phonenumber(this);
 }
@@ -264,7 +266,7 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
     QString aiHost = "generativelanguage.googleapis.com";
     QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
 
-    QString final = MCP::GetPrompt("soul") + MCP::GetPrompt("system_prompt") + MCP::GetPrompt("style") + MCP::GetPrompt("stickers") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
+    QString final = MCP::BuildSystemPrompt("main") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
     textwithoutnum finaluserText = phone->HideNumbers(userText);
     QString fullContextText = final + "\n" + finaluserText.usertext;
 
@@ -301,6 +303,76 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
     requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText,nums](const QJsonObject &response) {
         checkreq(response, chatId, userText, nums);
     });
+}
+
+void TgBot::handleUiMessage(const QString &agentId, const QString &promptName, const QString &text) {
+    if (geminiKey.isEmpty()) {
+        emit uiReplyReady(agentId, "Ошибка конфигурации бота: не задан GEMINI_KEY.");
+        return;
+    }
+
+    QString aiHost = "generativelanguage.googleapis.com";
+    QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
+
+    QString fullContextText = MCP::BuildSystemPrompt(promptName) + "\n" + text;
+
+    QJsonObject textPart{{"text", fullContextText}};
+    QJsonArray partsArray{textPart};
+    QJsonObject contentsObj{{"parts", partsArray}};
+    QJsonArray contentsArray{contentsObj};
+
+    QJsonObject body;
+    body["contents"] = contentsArray;
+    body["generationConfig"] = QJsonObject{{"responseMimeType", "application/json"}, {"maxOutputTokens", 4096}};
+
+    Requests::apiCall(this, aiHost, aiPath, body, {}, [this, agentId](const QJsonObject &response) {
+        emit uiReplyReady(agentId, extractAgentText(response));
+    });
+}
+
+QString TgBot::extractAgentText(const QJsonObject &response) {
+    if (response.contains("error"))
+        return "Ошибка при обращении к ИИ. Попробуйте позже.";
+
+    QJsonArray candidates = response["candidates"].toArray();
+    if (candidates.isEmpty())
+        return "ИИ не смог сформировать ответ.";
+
+    QJsonObject firstCandidate = candidates[0].toObject();
+    QJsonArray parts = firstCandidate["content"].toObject()["parts"].toArray();
+    if (parts.isEmpty())
+        return "ИИ вернул пустой ответ.";
+
+    QString rawAiText = parts[0].toObject()["text"].toString().trimmed();
+    if (rawAiText.startsWith("```")) {
+        rawAiText.remove(QRegularExpression("^```(?:json)?\\s*"));
+        rawAiText.remove(QRegularExpression("\\s*```$"));
+        rawAiText = rawAiText.trimmed();
+    }
+
+    QJsonParseError parseError;
+    QJsonDocument aiJsonDoc = QJsonDocument::fromJson(rawAiText.toUtf8(), &parseError);
+    if (parseError.error == QJsonParseError::GarbageAtEnd) {
+        aiJsonDoc = extractFirstJsonObject(rawAiText, &parseError);
+        if (aiJsonDoc.isObject())
+            parseError.error = QJsonParseError::NoError;
+    }
+
+    if (parseError.error != QJsonParseError::NoError || !aiJsonDoc.isObject())
+        return "ИИ вернул некорректный JSON.";
+
+    QJsonArray messagesArray = aiJsonDoc.object()["messages"].toArray();
+    QString fullAiText;
+    for (const QJsonValue &value : messagesArray) {
+        QString messageText = value.toObject()["text"].toString().trimmed();
+        if (messageText.isEmpty())
+            continue;
+        if (!fullAiText.isEmpty())
+            fullAiText += "\n";
+        fullAiText += messageText;
+    }
+
+    return fullAiText.isEmpty() ? "ИИ вернул пустой ответ." : fullAiText;
 }
 
 void TgBot::poll() {

@@ -344,6 +344,7 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "messageSubmitted",
         "",
         "agentId",
+        "promptName",
         "text",
         "addSubagentRequested",
         "subagentSelected",
@@ -356,47 +357,52 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "newRole",
         "mainAgentRenamed",
         "mainAgentRoleChanged",
+        "receiveAgentReply",
         "updateUptime",
         "handleSendClicked"
     };
 
     QtMocHelpers::UintData qt_methods {
         // Signal 'messageSubmitted'
-        QtMocHelpers::SignalData<void(const QString &, const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 3 }, { QMetaType::QString, 4 },
+        QtMocHelpers::SignalData<void(const QString &, const QString &, const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 3 }, { QMetaType::QString, 4 }, { QMetaType::QString, 5 },
         }}),
         // Signal 'addSubagentRequested'
-        QtMocHelpers::SignalData<void()>(5, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::SignalData<void()>(6, 2, QMC::AccessPublic, QMetaType::Void),
         // Signal 'subagentSelected'
-        QtMocHelpers::SignalData<void(const QString &)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 7 },
+        QtMocHelpers::SignalData<void(const QString &)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 8 },
         }}),
         // Signal 'mainAgentSelected'
-        QtMocHelpers::SignalData<void()>(8, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::SignalData<void()>(9, 2, QMC::AccessPublic, QMetaType::Void),
         // Signal 'subagentRemoveRequested'
-        QtMocHelpers::SignalData<void(const QString &)>(9, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 7 },
+        QtMocHelpers::SignalData<void(const QString &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 8 },
         }}),
         // Signal 'subagentRenamed'
-        QtMocHelpers::SignalData<void(const QString &, const QString &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 7 }, { QMetaType::QString, 11 },
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(11, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 8 }, { QMetaType::QString, 12 },
         }}),
         // Signal 'subagentRoleChanged'
-        QtMocHelpers::SignalData<void(const QString &, const QString &)>(12, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 7 }, { QMetaType::QString, 13 },
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(13, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 8 }, { QMetaType::QString, 14 },
         }}),
         // Signal 'mainAgentRenamed'
-        QtMocHelpers::SignalData<void(const QString &)>(14, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 11 },
+        QtMocHelpers::SignalData<void(const QString &)>(15, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 12 },
         }}),
         // Signal 'mainAgentRoleChanged'
-        QtMocHelpers::SignalData<void(const QString &)>(15, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 13 },
+        QtMocHelpers::SignalData<void(const QString &)>(16, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 14 },
+        }}),
+        // Slot 'receiveAgentReply'
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(17, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 3 }, { QMetaType::QString, 5 },
         }}),
         // Slot 'updateUptime'
-        QtMocHelpers::SlotData<void()>(16, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleSendClicked'
-        QtMocHelpers::SlotData<void()>(17, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -420,7 +426,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     auto *_t = static_cast<MainWindow *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
-        case 0: _t->messageSubmitted((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 0: _t->messageSubmitted((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[3]))); break;
         case 1: _t->addSubagentRequested(); break;
         case 2: _t->subagentSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
         case 3: _t->mainAgentSelected(); break;
@@ -429,13 +435,14 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 6: _t->subagentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         case 7: _t->mainAgentRenamed((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
         case 8: _t->mainAgentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 9: _t->updateUptime(); break;
-        case 10: _t->handleSendClicked(); break;
+        case 9: _t->receiveAgentReply((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 10: _t->updateUptime(); break;
+        case 11: _t->handleSendClicked(); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::messageSubmitted, 0))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & , const QString & )>(_a, &MainWindow::messageSubmitted, 0))
             return;
         if (QtMocHelpers::indexOfMethod<void (MainWindow::*)()>(_a, &MainWindow::addSubagentRequested, 1))
             return;
@@ -475,22 +482,22 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 11)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 11;
+        _id -= 12;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 11)
+        if (_id < 12)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 11;
+        _id -= 12;
     }
     return _id;
 }
 
 // SIGNAL 0
-void MainWindow::messageSubmitted(const QString & _t1, const QString & _t2)
+void MainWindow::messageSubmitted(const QString & _t1, const QString & _t2, const QString & _t3)
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1, _t2);
+    QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1, _t2, _t3);
 }
 
 // SIGNAL 1

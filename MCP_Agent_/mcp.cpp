@@ -4,20 +4,27 @@
 #include <QJsonObject>
 
 
-QString MCP::GetPrompt(QString promptPath){
-    QFile promptfile(promptPath + ".md");
-    if (!promptfile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Could not open file for reading:" << promptfile.errorString();
+QString MCP::GetPrompt(const QString &agentName, const QString &part){
+    QFile partFile(QString(APP_SRC_DIR) + QString("/agents/%1/%2.md").arg(agentName, part));
+    if (!partFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Could not open file for reading:" << partFile.errorString();
         return "";
     }
-    QTextStream in(&promptfile);
-    QString prompt;
-    while(!in.atEnd()){
-        prompt.append(in.readLine());
+    QTextStream in(&partFile);
+    QString content = in.readAll();
+    partFile.close();
+    return content;
+}
 
+QString MCP::BuildSystemPrompt(const QString &agentName){
+    static const QStringList parts = {"soul", "system_prompt", "style", "stickers"};
+    QString result;
+    for (const QString &part : parts) {
+        QString chunk = GetPrompt(agentName, part);
+        if (!chunk.isEmpty())
+            result += chunk + "\n";
     }
-    promptfile.close();
-    return prompt;
+    return result;
 }
 
 void MCP::SaveMessage(qint64 userid, QString userprompt, QString airesp){

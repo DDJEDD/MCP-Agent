@@ -38,7 +38,14 @@ class TgBot : public QObject
     void sendAnimation(qint64 chatId, const QString &animationUrl, const QString &caption);
     void downloadFile(const QString &fileId, std::function<void(const QByteArray &)> callback);
     void sendPhoto(qint64 chatId, const QString &photoUrl, const QString &caption);
+    QString extractAgentText(const QJsonObject &response);
 public:
     explicit TgBot(QObject *parent = nullptr);
+
+public slots:
+    void handleUiMessage(const QString &agentId, const QString &promptName, const QString &text);
+
+signals:
+    void uiReplyReady(const QString &agentId, const QString &text);
 };
 #endif // TGBOT_H
