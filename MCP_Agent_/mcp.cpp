@@ -2,6 +2,7 @@
 #include <QJsonDocument>
 #include <QDebug>
 #include <QJsonObject>
+#include <QDir>
 
 
 QString MCP::GetPrompt(const QString &agentName, const QString &part){
@@ -14,6 +15,20 @@ QString MCP::GetPrompt(const QString &agentName, const QString &part){
     QString content = in.readAll();
     partFile.close();
     return content;
+}
+
+void MCP::SavePrompt(const QString &agentName, const QString &part, const QString &content){
+    QDir dir;
+    dir.mkpath(QString(APP_SRC_DIR) + QString("/agents/%1").arg(agentName));
+
+    QFile partFile(QString(APP_SRC_DIR) + QString("/agents/%1/%2.md").arg(agentName, part));
+    if (!partFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qDebug() << "Could not open file for writing:" << partFile.errorString();
+        return;
+    }
+    QTextStream out(&partFile);
+    out << content;
+    partFile.close();
 }
 
 QString MCP::BuildSystemPrompt(const QString &agentName){

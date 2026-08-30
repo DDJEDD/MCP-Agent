@@ -44,7 +44,10 @@ template <> constexpr inline auto TgBot::qt_create_metaobjectdata<qt_meta_tag_ZN
         "agentId",
         "text",
         "handleUiMessage",
-        "promptName"
+        "promptName",
+        "applyCredentials",
+        "botToken",
+        "geminiApiKey"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -55,6 +58,10 @@ template <> constexpr inline auto TgBot::qt_create_metaobjectdata<qt_meta_tag_ZN
         // Slot 'handleUiMessage'
         QtMocHelpers::SlotData<void(const QString &, const QString &, const QString &)>(5, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 }, { QMetaType::QString, 6 }, { QMetaType::QString, 4 },
+        }}),
+        // Slot 'applyCredentials'
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 8 }, { QMetaType::QString, 9 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -81,6 +88,7 @@ void TgBot::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void 
         switch (_id) {
         case 0: _t->uiReplyReady((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         case 1: _t->handleUiMessage((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[3]))); break;
+        case 2: _t->applyCredentials((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         default: ;
         }
     }
@@ -109,14 +117,14 @@ int TgBot::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 2)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 2;
+        _id -= 3;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 2)
+        if (_id < 3)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 2;
+        _id -= 3;
     }
     return _id;
 }

@@ -19,8 +19,8 @@ class TgBot : public QObject
     Q_OBJECT
     Requests *requests;
     phonenumber *phone;
-    QString token = "8979215541:AAGMuBOHM81rE3y8R-iK7wsFuAGfTy4ckXI";
-    QString geminiKey = qgetenv("GEMINI_KEY");
+    QString token;
+    QString geminiKey;
 
     QString host  = "api.telegram.org";
     qint64 offset = 0;
@@ -44,6 +44,7 @@ public:
 
 public slots:
     void handleUiMessage(const QString &agentId, const QString &promptName, const QString &text);
+    void applyCredentials(const QString &botToken, const QString &geminiApiKey);
 
 signals:
     void uiReplyReady(const QString &agentId, const QString &text);

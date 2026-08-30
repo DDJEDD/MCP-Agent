@@ -117,6 +117,366 @@ void ClickableLabel::clicked()
     QMetaObject::activate(this, &staticMetaObject, 0, nullptr);
 }
 namespace {
+struct qt_meta_tag_ZN16AnimatedBackdropE_t {};
+} // unnamed namespace
+
+template <> constexpr inline auto AnimatedBackdrop::qt_create_metaobjectdata<qt_meta_tag_ZN16AnimatedBackdropE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "AnimatedBackdrop"
+    };
+
+    QtMocHelpers::UintData qt_methods {
+    };
+    QtMocHelpers::UintData qt_properties {
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<AnimatedBackdrop, qt_meta_tag_ZN16AnimatedBackdropE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject AnimatedBackdrop::staticMetaObject = { {
+    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16AnimatedBackdropE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16AnimatedBackdropE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN16AnimatedBackdropE_t>.metaTypes,
+    nullptr
+} };
+
+void AnimatedBackdrop::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    auto *_t = static_cast<AnimatedBackdrop *>(_o);
+    (void)_t;
+    (void)_c;
+    (void)_id;
+    (void)_a;
+}
+
+const QMetaObject *AnimatedBackdrop::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *AnimatedBackdrop::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN16AnimatedBackdropE_t>.strings))
+        return static_cast<void*>(this);
+    return QWidget::qt_metacast(_clname);
+}
+
+int AnimatedBackdrop::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QWidget::qt_metacall(_c, _id, _a);
+    return _id;
+}
+namespace {
+struct qt_meta_tag_ZN15NetworkBackdropE_t {};
+} // unnamed namespace
+
+template <> constexpr inline auto NetworkBackdrop::qt_create_metaobjectdata<qt_meta_tag_ZN15NetworkBackdropE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "NetworkBackdrop"
+    };
+
+    QtMocHelpers::UintData qt_methods {
+    };
+    QtMocHelpers::UintData qt_properties {
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<NetworkBackdrop, qt_meta_tag_ZN15NetworkBackdropE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject NetworkBackdrop::staticMetaObject = { {
+    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN15NetworkBackdropE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN15NetworkBackdropE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN15NetworkBackdropE_t>.metaTypes,
+    nullptr
+} };
+
+void NetworkBackdrop::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    auto *_t = static_cast<NetworkBackdrop *>(_o);
+    (void)_t;
+    (void)_c;
+    (void)_id;
+    (void)_a;
+}
+
+const QMetaObject *NetworkBackdrop::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *NetworkBackdrop::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN15NetworkBackdropE_t>.strings))
+        return static_cast<void*>(this);
+    return QWidget::qt_metacast(_clname);
+}
+
+int NetworkBackdrop::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QWidget::qt_metacall(_c, _id, _a);
+    return _id;
+}
+namespace {
+struct qt_meta_tag_ZN12ToggleSwitchE_t {};
+} // unnamed namespace
+
+template <> constexpr inline auto ToggleSwitch::qt_create_metaobjectdata<qt_meta_tag_ZN12ToggleSwitchE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "ToggleSwitch",
+        "toggled",
+        "",
+        "checked",
+        "knobPos"
+    };
+
+    QtMocHelpers::UintData qt_methods {
+        // Signal 'toggled'
+        QtMocHelpers::SignalData<void(bool)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::Bool, 3 },
+        }}),
+    };
+    QtMocHelpers::UintData qt_properties {
+        // property 'knobPos'
+        QtMocHelpers::PropertyData<qreal>(4, QMetaType::QReal, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet),
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<ToggleSwitch, qt_meta_tag_ZN12ToggleSwitchE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject ToggleSwitch::staticMetaObject = { {
+    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12ToggleSwitchE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12ToggleSwitchE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN12ToggleSwitchE_t>.metaTypes,
+    nullptr
+} };
+
+void ToggleSwitch::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    auto *_t = static_cast<ToggleSwitch *>(_o);
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        switch (_id) {
+        case 0: _t->toggled((*reinterpret_cast<std::add_pointer_t<bool>>(_a[1]))); break;
+        default: ;
+        }
+    }
+    if (_c == QMetaObject::IndexOfMethod) {
+        if (QtMocHelpers::indexOfMethod<void (ToggleSwitch::*)(bool )>(_a, &ToggleSwitch::toggled, 0))
+            return;
+    }
+    if (_c == QMetaObject::ReadProperty) {
+        void *_v = _a[0];
+        switch (_id) {
+        case 0: *reinterpret_cast<qreal*>(_v) = _t->knobPos(); break;
+        default: break;
+        }
+    }
+    if (_c == QMetaObject::WriteProperty) {
+        void *_v = _a[0];
+        switch (_id) {
+        case 0: _t->setKnobPos(*reinterpret_cast<qreal*>(_v)); break;
+        default: break;
+        }
+    }
+}
+
+const QMetaObject *ToggleSwitch::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *ToggleSwitch::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN12ToggleSwitchE_t>.strings))
+        return static_cast<void*>(this);
+    return QWidget::qt_metacast(_clname);
+}
+
+int ToggleSwitch::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QWidget::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        if (_id < 1)
+            qt_static_metacall(this, _c, _id, _a);
+        _id -= 1;
+    }
+    if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+        if (_id < 1)
+            *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
+        _id -= 1;
+    }
+    if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty
+            || _c == QMetaObject::ResetProperty || _c == QMetaObject::BindableProperty
+            || _c == QMetaObject::RegisterPropertyMetaType) {
+        qt_static_metacall(this, _c, _id, _a);
+        _id -= 1;
+    }
+    return _id;
+}
+
+// SIGNAL 0
+void ToggleSwitch::toggled(bool _t1)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 0, nullptr, _t1);
+}
+namespace {
+struct qt_meta_tag_ZN18AnimatedIconButtonE_t {};
+} // unnamed namespace
+
+template <> constexpr inline auto AnimatedIconButton::qt_create_metaobjectdata<qt_meta_tag_ZN18AnimatedIconButtonE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "AnimatedIconButton",
+        "spin"
+    };
+
+    QtMocHelpers::UintData qt_methods {
+    };
+    QtMocHelpers::UintData qt_properties {
+        // property 'spin'
+        QtMocHelpers::PropertyData<qreal>(1, QMetaType::QReal, QMC::DefaultPropertyFlags | QMC::Writable | QMC::StdCppSet),
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<AnimatedIconButton, qt_meta_tag_ZN18AnimatedIconButtonE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject AnimatedIconButton::staticMetaObject = { {
+    QMetaObject::SuperData::link<QPushButton::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN18AnimatedIconButtonE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN18AnimatedIconButtonE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN18AnimatedIconButtonE_t>.metaTypes,
+    nullptr
+} };
+
+void AnimatedIconButton::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    auto *_t = static_cast<AnimatedIconButton *>(_o);
+    if (_c == QMetaObject::ReadProperty) {
+        void *_v = _a[0];
+        switch (_id) {
+        case 0: *reinterpret_cast<qreal*>(_v) = _t->spin(); break;
+        default: break;
+        }
+    }
+    if (_c == QMetaObject::WriteProperty) {
+        void *_v = _a[0];
+        switch (_id) {
+        case 0: _t->setSpin(*reinterpret_cast<qreal*>(_v)); break;
+        default: break;
+        }
+    }
+}
+
+const QMetaObject *AnimatedIconButton::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *AnimatedIconButton::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN18AnimatedIconButtonE_t>.strings))
+        return static_cast<void*>(this);
+    return QPushButton::qt_metacast(_clname);
+}
+
+int AnimatedIconButton::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QPushButton::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty
+            || _c == QMetaObject::ResetProperty || _c == QMetaObject::BindableProperty
+            || _c == QMetaObject::RegisterPropertyMetaType) {
+        qt_static_metacall(this, _c, _id, _a);
+        _id -= 1;
+    }
+    return _id;
+}
+namespace {
+struct qt_meta_tag_ZN11AgentAvatarE_t {};
+} // unnamed namespace
+
+template <> constexpr inline auto AgentAvatar::qt_create_metaobjectdata<qt_meta_tag_ZN11AgentAvatarE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "AgentAvatar"
+    };
+
+    QtMocHelpers::UintData qt_methods {
+    };
+    QtMocHelpers::UintData qt_properties {
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<AgentAvatar, qt_meta_tag_ZN11AgentAvatarE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject AgentAvatar::staticMetaObject = { {
+    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN11AgentAvatarE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN11AgentAvatarE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN11AgentAvatarE_t>.metaTypes,
+    nullptr
+} };
+
+void AgentAvatar::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    auto *_t = static_cast<AgentAvatar *>(_o);
+    (void)_t;
+    (void)_c;
+    (void)_id;
+    (void)_a;
+}
+
+const QMetaObject *AgentAvatar::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
+}
+
+void *AgentAvatar::qt_metacast(const char *_clname)
+{
+    if (!_clname) return nullptr;
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN11AgentAvatarE_t>.strings))
+        return static_cast<void*>(this);
+    return QWidget::qt_metacast(_clname);
+}
+
+int AgentAvatar::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QWidget::qt_metacall(_c, _id, _a);
+    return _id;
+}
+namespace {
 struct qt_meta_tag_ZN14ClickableFrameE_t {};
 } // unnamed namespace
 
@@ -214,9 +574,10 @@ template <> constexpr inline auto SubagentCard::qt_create_metaobjectdata<qt_meta
         "",
         "id",
         "newName",
-        "removeRequested",
         "settingsRequested",
-        "clicked"
+        "clicked",
+        "enabledToggled",
+        "enabled"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -224,17 +585,17 @@ template <> constexpr inline auto SubagentCard::qt_create_metaobjectdata<qt_meta
         QtMocHelpers::SignalData<void(const QString &, const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 }, { QMetaType::QString, 4 },
         }}),
-        // Signal 'removeRequested'
+        // Signal 'settingsRequested'
         QtMocHelpers::SignalData<void(const QString &)>(5, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 },
         }}),
-        // Signal 'settingsRequested'
+        // Signal 'clicked'
         QtMocHelpers::SignalData<void(const QString &)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 },
         }}),
-        // Signal 'clicked'
-        QtMocHelpers::SignalData<void(const QString &)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 3 },
+        // Signal 'enabledToggled'
+        QtMocHelpers::SignalData<void(const QString &, bool)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 3 }, { QMetaType::Bool, 8 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -260,20 +621,20 @@ void SubagentCard::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->nameEdited((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
-        case 1: _t->removeRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 2: _t->settingsRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 3: _t->clicked((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 1: _t->settingsRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 2: _t->clicked((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 3: _t->enabledToggled((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<bool>>(_a[2]))); break;
         default: ;
         }
     }
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & , const QString & )>(_a, &SubagentCard::nameEdited, 0))
             return;
-        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & )>(_a, &SubagentCard::removeRequested, 1))
+        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & )>(_a, &SubagentCard::settingsRequested, 1))
             return;
-        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & )>(_a, &SubagentCard::settingsRequested, 2))
+        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & )>(_a, &SubagentCard::clicked, 2))
             return;
-        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & )>(_a, &SubagentCard::clicked, 3))
+        if (QtMocHelpers::indexOfMethod<void (SubagentCard::*)(const QString & , bool )>(_a, &SubagentCard::enabledToggled, 3))
             return;
     }
 }
@@ -316,21 +677,21 @@ void SubagentCard::nameEdited(const QString & _t1, const QString & _t2)
 }
 
 // SIGNAL 1
-void SubagentCard::removeRequested(const QString & _t1)
+void SubagentCard::settingsRequested(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 1, nullptr, _t1);
 }
 
 // SIGNAL 2
-void SubagentCard::settingsRequested(const QString & _t1)
+void SubagentCard::clicked(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 2, nullptr, _t1);
 }
 
 // SIGNAL 3
-void SubagentCard::clicked(const QString & _t1)
+void SubagentCard::enabledToggled(const QString & _t1, bool _t2)
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 3, nullptr, _t1);
+    QMetaObject::activate<void>(this, &staticMetaObject, 3, nullptr, _t1, _t2);
 }
 namespace {
 struct qt_meta_tag_ZN10MainWindowE_t {};
@@ -346,6 +707,9 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "agentId",
         "promptName",
         "text",
+        "appCredentialsChanged",
+        "botToken",
+        "geminiApiKey",
         "addSubagentRequested",
         "subagentSelected",
         "id",
@@ -358,7 +722,6 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         "mainAgentRenamed",
         "mainAgentRoleChanged",
         "receiveAgentReply",
-        "updateUptime",
         "handleSendClicked"
     };
 
@@ -367,42 +730,44 @@ template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_t
         QtMocHelpers::SignalData<void(const QString &, const QString &, const QString &)>(1, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 }, { QMetaType::QString, 4 }, { QMetaType::QString, 5 },
         }}),
+        // Signal 'appCredentialsChanged'
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(6, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 7 }, { QMetaType::QString, 8 },
+        }}),
         // Signal 'addSubagentRequested'
-        QtMocHelpers::SignalData<void()>(6, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::SignalData<void()>(9, 2, QMC::AccessPublic, QMetaType::Void),
         // Signal 'subagentSelected'
-        QtMocHelpers::SignalData<void(const QString &)>(7, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 8 },
+        QtMocHelpers::SignalData<void(const QString &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 11 },
         }}),
         // Signal 'mainAgentSelected'
-        QtMocHelpers::SignalData<void()>(9, 2, QMC::AccessPublic, QMetaType::Void),
+        QtMocHelpers::SignalData<void()>(12, 2, QMC::AccessPublic, QMetaType::Void),
         // Signal 'subagentRemoveRequested'
-        QtMocHelpers::SignalData<void(const QString &)>(10, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 8 },
+        QtMocHelpers::SignalData<void(const QString &)>(13, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 11 },
         }}),
         // Signal 'subagentRenamed'
-        QtMocHelpers::SignalData<void(const QString &, const QString &)>(11, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 8 }, { QMetaType::QString, 12 },
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(14, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 11 }, { QMetaType::QString, 15 },
         }}),
         // Signal 'subagentRoleChanged'
-        QtMocHelpers::SignalData<void(const QString &, const QString &)>(13, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 8 }, { QMetaType::QString, 14 },
+        QtMocHelpers::SignalData<void(const QString &, const QString &)>(16, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 11 }, { QMetaType::QString, 17 },
         }}),
         // Signal 'mainAgentRenamed'
-        QtMocHelpers::SignalData<void(const QString &)>(15, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 12 },
+        QtMocHelpers::SignalData<void(const QString &)>(18, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 15 },
         }}),
         // Signal 'mainAgentRoleChanged'
-        QtMocHelpers::SignalData<void(const QString &)>(16, 2, QMC::AccessPublic, QMetaType::Void, {{
-            { QMetaType::QString, 14 },
+        QtMocHelpers::SignalData<void(const QString &)>(19, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 17 },
         }}),
         // Slot 'receiveAgentReply'
-        QtMocHelpers::SlotData<void(const QString &, const QString &)>(17, 2, QMC::AccessPublic, QMetaType::Void, {{
+        QtMocHelpers::SlotData<void(const QString &, const QString &)>(20, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 3 }, { QMetaType::QString, 5 },
         }}),
-        // Slot 'updateUptime'
-        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
         // Slot 'handleSendClicked'
-        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
+        QtMocHelpers::SlotData<void()>(21, 2, QMC::AccessPrivate, QMetaType::Void),
     };
     QtMocHelpers::UintData qt_properties {
     };
@@ -427,16 +792,16 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     if (_c == QMetaObject::InvokeMetaMethod) {
         switch (_id) {
         case 0: _t->messageSubmitted((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[3]))); break;
-        case 1: _t->addSubagentRequested(); break;
-        case 2: _t->subagentSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 3: _t->mainAgentSelected(); break;
-        case 4: _t->subagentRemoveRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 5: _t->subagentRenamed((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
-        case 6: _t->subagentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
-        case 7: _t->mainAgentRenamed((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 8: _t->mainAgentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
-        case 9: _t->receiveAgentReply((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
-        case 10: _t->updateUptime(); break;
+        case 1: _t->appCredentialsChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 2: _t->addSubagentRequested(); break;
+        case 3: _t->subagentSelected((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 4: _t->mainAgentSelected(); break;
+        case 5: _t->subagentRemoveRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 6: _t->subagentRenamed((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 7: _t->subagentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
+        case 8: _t->mainAgentRenamed((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 9: _t->mainAgentRoleChanged((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 10: _t->receiveAgentReply((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QString>>(_a[2]))); break;
         case 11: _t->handleSendClicked(); break;
         default: ;
         }
@@ -444,21 +809,23 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     if (_c == QMetaObject::IndexOfMethod) {
         if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & , const QString & )>(_a, &MainWindow::messageSubmitted, 0))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)()>(_a, &MainWindow::addSubagentRequested, 1))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::appCredentialsChanged, 1))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::subagentSelected, 2))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)()>(_a, &MainWindow::addSubagentRequested, 2))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)()>(_a, &MainWindow::mainAgentSelected, 3))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::subagentSelected, 3))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::subagentRemoveRequested, 4))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)()>(_a, &MainWindow::mainAgentSelected, 4))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::subagentRenamed, 5))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::subagentRemoveRequested, 5))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::subagentRoleChanged, 6))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::subagentRenamed, 6))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::mainAgentRenamed, 7))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & , const QString & )>(_a, &MainWindow::subagentRoleChanged, 7))
             return;
-        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::mainAgentRoleChanged, 8))
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::mainAgentRenamed, 8))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (MainWindow::*)(const QString & )>(_a, &MainWindow::mainAgentRoleChanged, 9))
             return;
     }
 }
@@ -501,50 +868,56 @@ void MainWindow::messageSubmitted(const QString & _t1, const QString & _t2, cons
 }
 
 // SIGNAL 1
-void MainWindow::addSubagentRequested()
+void MainWindow::appCredentialsChanged(const QString & _t1, const QString & _t2)
 {
-    QMetaObject::activate(this, &staticMetaObject, 1, nullptr);
+    QMetaObject::activate<void>(this, &staticMetaObject, 1, nullptr, _t1, _t2);
 }
 
 // SIGNAL 2
-void MainWindow::subagentSelected(const QString & _t1)
+void MainWindow::addSubagentRequested()
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 2, nullptr, _t1);
+    QMetaObject::activate(this, &staticMetaObject, 2, nullptr);
 }
 
 // SIGNAL 3
-void MainWindow::mainAgentSelected()
+void MainWindow::subagentSelected(const QString & _t1)
 {
-    QMetaObject::activate(this, &staticMetaObject, 3, nullptr);
+    QMetaObject::activate<void>(this, &staticMetaObject, 3, nullptr, _t1);
 }
 
 // SIGNAL 4
-void MainWindow::subagentRemoveRequested(const QString & _t1)
+void MainWindow::mainAgentSelected()
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 4, nullptr, _t1);
+    QMetaObject::activate(this, &staticMetaObject, 4, nullptr);
 }
 
 // SIGNAL 5
-void MainWindow::subagentRenamed(const QString & _t1, const QString & _t2)
+void MainWindow::subagentRemoveRequested(const QString & _t1)
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 5, nullptr, _t1, _t2);
+    QMetaObject::activate<void>(this, &staticMetaObject, 5, nullptr, _t1);
 }
 
 // SIGNAL 6
-void MainWindow::subagentRoleChanged(const QString & _t1, const QString & _t2)
+void MainWindow::subagentRenamed(const QString & _t1, const QString & _t2)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 6, nullptr, _t1, _t2);
 }
 
 // SIGNAL 7
-void MainWindow::mainAgentRenamed(const QString & _t1)
+void MainWindow::subagentRoleChanged(const QString & _t1, const QString & _t2)
 {
-    QMetaObject::activate<void>(this, &staticMetaObject, 7, nullptr, _t1);
+    QMetaObject::activate<void>(this, &staticMetaObject, 7, nullptr, _t1, _t2);
 }
 
 // SIGNAL 8
-void MainWindow::mainAgentRoleChanged(const QString & _t1)
+void MainWindow::mainAgentRenamed(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 8, nullptr, _t1);
+}
+
+// SIGNAL 9
+void MainWindow::mainAgentRoleChanged(const QString & _t1)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 9, nullptr, _t1);
 }
 QT_WARNING_POP

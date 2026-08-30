@@ -3,15 +3,23 @@
 #include <QApplication>
 #include "QLabel"
 #include <QSslSocket>
+#include <QFont>
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    QFont appFont = a.font();
+    appFont.setStyleHint(QFont::SansSerif);
+    appFont.setPointSize(appFont.pointSize() + 1);
+    a.setFont(appFont);
+
     MainWindow w;
     qInfo() << "SSL:" << QSslSocket::supportsSsl() << QSslSocket::sslLibraryVersionString();
 
     TgBot bot;
     QObject::connect(&w, &MainWindow::messageSubmitted, &bot, &TgBot::handleUiMessage);
     QObject::connect(&bot, &TgBot::uiReplyReady, &w, &MainWindow::receiveAgentReply);
+    QObject::connect(&w, &MainWindow::appCredentialsChanged, &bot, &TgBot::applyCredentials);
     w.show();
     return a.exec();
 }

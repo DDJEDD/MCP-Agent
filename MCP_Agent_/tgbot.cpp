@@ -5,12 +5,22 @@
 #include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
 #include <QTimer>
+#include <QSettings>
 
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
+    QSettings settings(QString(APP_SRC_DIR) + "/config.ini", QSettings::IniFormat);
+    token = settings.value("telegram_token", "8979215541:AAGMuBOHM81rE3y8R-iK7wsFuAGfTy4ckXI").toString();
+    geminiKey = settings.value("gemini_api_key", QString(qgetenv("GEMINI_KEY"))).toString();
+
     template_agents::Generate("main");
     poll();
     phone = new phonenumber(this);
+}
+
+void TgBot::applyCredentials(const QString &botToken, const QString &geminiApiKey) {
+    token = botToken;
+    geminiKey = geminiApiKey;
 }
 void TgBot::checkreqPhoto(const QJsonObject &response, qint64 chatId, const QString &prompt) {
     if (response.contains("error")) {
@@ -264,7 +274,7 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
         return;
     }
     QString aiHost = "generativelanguage.googleapis.com";
-    QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
+    QString aiPath = QString("/v1beta/models/gemini-3.5-flash:generateContent?key=%1").arg(geminiKey);
 
     QString final = MCP::BuildSystemPrompt("main") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
     textwithoutnum finaluserText = phone->HideNumbers(userText);
@@ -312,7 +322,7 @@ void TgBot::handleUiMessage(const QString &agentId, const QString &promptName, c
     }
 
     QString aiHost = "generativelanguage.googleapis.com";
-    QString aiPath = QString(qgetenv("AI_TEXT_PATH")).arg(geminiKey);
+    QString aiPath = QString("/v1beta/models/gemini-3.5-flash:generateContent?key=%1").arg(geminiKey);
 
     QString fullContextText = MCP::BuildSystemPrompt(promptName) + "\n" + text;
 
@@ -382,7 +392,7 @@ void TgBot::poll() {
     requests->apiCall(this, host, path, body, {}, [this](const QJsonObject &resp) {
         if (!resp.value("ok").toBool()) {
             qWarning() << "getUpdates вернул ошибку:" << resp;
-            poll();
+            QTimer::singleShot(3000, this, &TgBot::poll);
             return;
         }
 

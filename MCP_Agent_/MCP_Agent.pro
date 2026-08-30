@@ -3,6 +3,8 @@ QT       += core gui network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
+CONFIG += nostrip
+macx: QMAKE_POST_LINK += codesign --force --deep -s - $$shell_quote($$OUT_PWD/$${TARGET}.app) $$escape_expand(\\n\\t)
 
 DEFINES += APP_SRC_DIR=\\\"$$PWD\\\"
 
