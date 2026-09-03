@@ -14,7 +14,7 @@ class phonenumber:public QObject
 public:
     explicit phonenumber(QObject *parent = nullptr);
     textwithoutnum HideNumbers(const QString &userText);
-    QString restoreNumbers(const QString &airesp, QMap<QString,QString> nums);
+    QString restoreNumbers(const QString &airesp, QMap<QString,QString> nums) const;
 };
 
 #endif // PHONENUMBER_H

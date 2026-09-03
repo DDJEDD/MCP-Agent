@@ -30,7 +30,7 @@ textwithoutnum phonenumber::HideNumbers(const QString &userText){
     return res;
 }
 
-QString phonenumber::restoreNumbers(const QString &airesp, QMap<QString,QString> nums){
+QString phonenumber::restoreNumbers(const QString &airesp, QMap<QString,QString> nums) const{
     QString restoredtext = airesp;
     for (auto e = nums.constBegin(); e != nums.constEnd(); ++e) {
         restoredtext.replace(e.key(), e.value());

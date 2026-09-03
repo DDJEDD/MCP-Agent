@@ -2,10 +2,12 @@
 #define REQUESTS_H
 #include <QJsonObject>
 #include <QJsonDocument>
-#include <QJsonArray>
+#include <QSslSocket>
+#include <QJsonObject>
 #include <QDebug>
-#include <QMap>
-#include <functional>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QApplication>
 class Requests
 {
 public:

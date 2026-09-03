@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "template_agents.h"
-#include "mcp.h"
 
 #include <QLabel>
 #include <QLineEdit>
@@ -19,6 +17,7 @@
 #include <QTimer>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QMessageBox>
 #include <QFontMetrics>
 #include <QDir>
 #include <QTabWidget>
@@ -39,12 +38,16 @@
 #include <QFileDialog>
 #include <QMovie>
 #include <QStackedWidget>
-#include <QMessageBox>
 #include <QGridLayout>
 #include <cmath>
 #include <utility>
 
+// ---------------------------------------------------------------------------
+// Anonymous namespace: theming (interface layer) + min_info helpers (logic
+// layer). The two used to live in separate files; they are unified here.
+// ---------------------------------------------------------------------------
 namespace {
+
 qreal sharedBackdropPhase()
 {
     static QElapsedTimer clock;
@@ -85,11 +88,11 @@ struct ThemeFamily { QString id; QString label; QString lightId; QString darkId;
 QList<ThemeFamily> themeFamilies()
 {
     return {
-        {"neutral", "Обычная", "light", "dark"},
-        {"pink",    "Pink",    "pink",  "pinkdark"},
-        {"nord",    "Nord",    "nordlight", "nord"},
-        {"sunset",  "Sunset",  "sunsetlight", "sunset"},
-    };
+            {"neutral", "Обычная", "light", "dark"},
+            {"pink",    "Pink",    "pink",  "pinkdark"},
+            {"nord",    "Nord",    "nordlight", "nord"},
+            {"sunset",  "Sunset",  "sunsetlight", "sunset"},
+            };
 }
 
 QString themeDisplayName(const QString &themeId)
@@ -141,9 +144,9 @@ ThemePalette buildPalette(const QColor &bg, const QColor &panel, const QColor &c
     const QColor textMuted  = dark ? text.darker(160)  : text.lighter(180);
 
     return { bg.name(), panel.name(), card.name(), card.name(), cardHover.name(), border.name(), accent.name(),
-             text.name(), textSubtle.name(), textMuted.name(),
-             accent.name(), accent2.name(), success.name(), danger.name(),
-             textMuted.name(), success.name(), "#f9e2af", danger.name() };
+            text.name(), textSubtle.name(), textMuted.name(),
+            accent.name(), accent2.name(), success.name(), danger.name(),
+            textMuted.name(), success.name(), "#f9e2af", danger.name() };
 }
 
 ThemePalette paletteFor(const QString &themeName)
@@ -194,7 +197,7 @@ QColor mixColor(const QColor &a, const QColor &b, qreal t)
         a.red()   + int((b.red()   - a.red())   * t),
         a.green() + int((b.green() - a.green()) * t),
         a.blue()  + int((b.blue()  - a.blue())   * t)
-    );
+        );
 }
 
 struct AvatarGradient { QColor start; QColor end; };
@@ -205,7 +208,7 @@ const QList<AvatarGradient> kAvatarGradients = {
     {QColor("#ffd479"), QColor("#f6a622")},
     {QColor("#b39bff"), QColor("#7c5cff")},
     {QColor("#7fd4ff"), QColor("#2fa3e0")},
-};
+    };
 
 QString iconButtonStyle(const QString &hoverColor, const QString &hoverBg, int fontSizePx = 12, int radiusPx = 10)
 {
@@ -223,7 +226,41 @@ QString iconButtonStyle(const QString &hoverColor, const QString &hoverBg, int f
                "}"
                ).arg(kTextMuted, hoverBg, hoverColor).arg(fontSizePx).arg(radiusPx);
 }
+
+// ---------------------------------------------------------------------------
+// min_info stores both the agent's name and its role/badge in one file:
+// first line "Имя агента: X", everything after is the free-form role note.
+// This is the single place where that format is parsed/assembled.
+// ---------------------------------------------------------------------------
+QString extractRoleFromMinInfo(const QString &minInfo)
+{
+    QStringList roleLines;
+    for (const QString &line : minInfo.split('\n')) {
+        if (line.startsWith("Имя агента:"))
+            continue;
+        roleLines << line;
+    }
+    return roleLines.join('\n').trimmed();
 }
+
+QString buildMinInfo(const QString &name, const QString &role)
+{
+    QString result = "Имя агента: " + name;
+    const QString trimmedRole = role.trimmed();
+    if (!trimmedRole.isEmpty())
+        result += "\n" + trimmedRole;
+    return result;
+}
+
+}
+
+// ===========================================================================
+// AnimatedBackdrop / NetworkBackdrop / ToggleSwitch / AnimatedIconButton /
+// AgentAvatar / ClickableLabel / ClickableFrame / SubagentCard
+//
+// Pure presentation classes — unchanged from the "pretty" interface version,
+// they carry no persistence logic at all.
+// ===========================================================================
 
 AnimatedBackdrop::AnimatedBackdrop(QWidget *parent)
     : QWidget(parent)
@@ -279,23 +316,10 @@ void AnimatedBackdrop::paintEvent(QPaintEvent *)
         return;
     }
 
-    if (m_mode == "aurora") {
-        paintAurora(painter);
-        return;
-    }
-
-    if (m_mode == "particles") {
-        paintParticles(painter);
-        return;
-    }
-
-    if (m_mode == "starfall") {
-        paintStarfall(painter);
-        return;
-    }
-
-    if (m_mode == "none")
-        return;
+    if (m_mode == "aurora") { paintAurora(painter); return; }
+    if (m_mode == "particles") { paintParticles(painter); return; }
+    if (m_mode == "starfall") { paintStarfall(painter); return; }
+    if (m_mode == "none") return;
 
     paintBlobs(painter);
 }
@@ -308,20 +332,18 @@ void AnimatedBackdrop::paintBlobs(QPainter &painter)
     const qreal span = qMax(w, h);
 
     const QList<Blob> blobs = {
-        { w * 0.28, h * 0.26, 0.55, 0.42, 0.0, 1.4, span * 0.20, kAccent },
-        { w * 0.78, h * 0.62, 0.40, 0.60, 2.1, 0.4, span * 0.18, kAccent2 },
-        { w * 0.52, h * 0.88, 0.48, 0.35, 4.0, 2.6, span * 0.16, kAccentGreen },
-    };
+                               { w * 0.28, h * 0.26, 0.55, 0.42, 0.0, 1.4, span * 0.20, kAccent },
+                               { w * 0.78, h * 0.62, 0.40, 0.60, 2.1, 0.4, span * 0.18, kAccent2 },
+                               { w * 0.52, h * 0.88, 0.48, 0.35, 4.0, 2.6, span * 0.16, kAccentGreen },
+                               };
 
     for (const auto &blob : blobs) {
         const qreal cx = blob.ax + std::sin(m_phase * blob.freqX + blob.phaseX) * w * 0.12;
         const qreal cy = blob.ay + std::cos(m_phase * blob.freqY + blob.phaseY) * h * 0.12;
 
         QRadialGradient gradient(cx, cy, blob.radius);
-        QColor inner(blob.color);
-        inner.setAlphaF(0.15f);
-        QColor edge(blob.color);
-        edge.setAlphaF(0.0f);
+        QColor inner(blob.color); inner.setAlphaF(0.15f);
+        QColor edge(blob.color); edge.setAlphaF(0.0f);
         gradient.setColorAt(0.0, inner);
         gradient.setColorAt(1.0, edge);
 
@@ -340,16 +362,12 @@ void AnimatedBackdrop::paintAurora(QPainter &painter)
     const qreal len = qMax(width(), height());
 
     QLinearGradient gradient(cx - std::cos(rad) * len, cy - std::sin(rad) * len,
-                              cx + std::cos(rad) * len, cy + std::sin(rad) * len);
+                             cx + std::cos(rad) * len, cy + std::sin(rad) * len);
 
-    QColor edge1(kAccent);
-    edge1.setAlphaF(0.0f);
-    QColor mid1(kAccent);
-    mid1.setAlphaF(0.20f);
-    QColor mid2(kAccent2);
-    mid2.setAlphaF(0.20f);
-    QColor edge2(kAccent2);
-    edge2.setAlphaF(0.0f);
+    QColor edge1(kAccent); edge1.setAlphaF(0.0f);
+    QColor mid1(kAccent); mid1.setAlphaF(0.20f);
+    QColor mid2(kAccent2); mid2.setAlphaF(0.20f);
+    QColor edge2(kAccent2); edge2.setAlphaF(0.0f);
 
     gradient.setColorAt(0.0, edge1);
     gradient.setColorAt(0.35, mid1);
@@ -363,11 +381,11 @@ void AnimatedBackdrop::paintParticles(QPainter &painter)
 {
     struct Spot { qreal nx, ny, phase, speed; };
     static const QList<Spot> spots = {
-        {0.02, 0.08, 0.0, 1.0}, {0.97, 0.15, 1.3, 0.8}, {0.06, 0.90, 2.6, 1.2},
-        {0.94, 0.85, 0.7, 0.9}, {0.35, 0.03, 2.1, 1.1}, {0.65, 0.97, 3.4, 0.7},
-        {0.03, 0.45, 1.8, 1.0}, {0.97, 0.55, 4.0, 0.8}, {0.20, 0.04, 2.9, 1.3},
-        {0.80, 0.96, 0.3, 0.9},
-    };
+                                      {0.02, 0.08, 0.0, 1.0}, {0.97, 0.15, 1.3, 0.8}, {0.06, 0.90, 2.6, 1.2},
+                                      {0.94, 0.85, 0.7, 0.9}, {0.35, 0.03, 2.1, 1.1}, {0.65, 0.97, 3.4, 0.7},
+                                      {0.03, 0.45, 1.8, 1.0}, {0.97, 0.55, 4.0, 0.8}, {0.20, 0.04, 2.9, 1.3},
+                                      {0.80, 0.96, 0.3, 0.9},
+                                      };
 
     const QStringList palette = {kAccent, kAccent2, kAccentGreen};
     const qreal w = width();
@@ -391,12 +409,12 @@ void AnimatedBackdrop::paintStarfall(QPainter &painter)
 {
     struct Meteor { qreal startX, startY, angle, trailLen, speed, offset; QString color; };
     static const QList<Meteor> meteors = {
-        {0.10, -0.05, 32.0, 0.20, 0.55, 0.00, kAccent},
-        {0.42, -0.08, 28.0, 0.16, 0.42, 0.40, kAccent2},
-        {0.68, -0.04, 36.0, 0.22, 0.65, 0.70, kAccent},
-        {0.25, -0.10, 30.0, 0.14, 0.38, 0.20, kAccentGreen},
-        {0.85, -0.06, 34.0, 0.24, 0.50, 0.85, kAccent2},
-    };
+                                          {0.10, -0.05, 32.0, 0.20, 0.55, 0.00, kAccent},
+                                          {0.42, -0.08, 28.0, 0.16, 0.42, 0.40, kAccent2},
+                                          {0.68, -0.04, 36.0, 0.22, 0.65, 0.70, kAccent},
+                                          {0.25, -0.10, 30.0, 0.14, 0.38, 0.20, kAccentGreen},
+                                          {0.85, -0.06, 34.0, 0.24, 0.50, 0.85, kAccent2},
+                                          };
 
     const qreal w = width();
     const qreal h = height();
@@ -404,8 +422,7 @@ void AnimatedBackdrop::paintStarfall(QPainter &painter)
 
     for (const auto &m : meteors) {
         const qreal cycle = std::fmod(m_phase * m.speed + m.offset, 1.0);
-        if (cycle > 0.55)
-            continue;
+        if (cycle > 0.55) continue;
 
         const qreal rad = m.angle * M_PI / 180.0;
         const qreal travel = (cycle / 0.55) * diag * 1.25;
@@ -415,13 +432,10 @@ void AnimatedBackdrop::paintStarfall(QPainter &painter)
         const qreal fadeIn = qMin(1.0, cycle / 0.08);
         const qreal fadeOut = qMin(1.0, (0.55 - cycle) / 0.15);
         const qreal alpha = qMin(fadeIn, fadeOut);
-        if (alpha <= 0.02)
-            continue;
+        if (alpha <= 0.02) continue;
 
-        QColor headColor(m.color);
-        headColor.setAlphaF(float(0.8 * alpha));
-        QColor tailColor(m.color);
-        tailColor.setAlphaF(0.0f);
+        QColor headColor(m.color); headColor.setAlphaF(float(0.8 * alpha));
+        QColor tailColor(m.color); tailColor.setAlphaF(0.0f);
 
         QLinearGradient trailGradient(head, tail);
         trailGradient.setColorAt(0.0, headColor);
@@ -432,8 +446,7 @@ void AnimatedBackdrop::paintStarfall(QPainter &painter)
         painter.setPen(trailPen);
         painter.drawLine(head, tail);
 
-        QColor dotColor(Qt::white);
-        dotColor.setAlphaF(float(0.9 * alpha));
+        QColor dotColor(Qt::white); dotColor.setAlphaF(float(0.9 * alpha));
         painter.setPen(Qt::NoPen);
         painter.setBrush(dotColor);
         painter.drawEllipse(head, 1.7, 1.7);
@@ -469,32 +482,27 @@ void NetworkBackdrop::paintEvent(QPaintEvent *)
     painter.setClipPath(path);
 
     QString fillColor = kBgPanel;
-    if (m_surface == Surface::Card)
-        fillColor = kBgCard;
-    else if (m_surface == Surface::Window)
-        fillColor = kBgWindow;
+    if (m_surface == Surface::Card) fillColor = kBgCard;
+    else if (m_surface == Surface::Window) fillColor = kBgWindow;
     painter.fillRect(rect(), QColor(fillColor));
 
-    if (!m_enabled)
-        return;
+    if (!m_enabled) return;
 
-    if (m_mode == "starfall")
-        paintStarfall(painter);
-    else
-        paintNodes(painter);
+    if (m_mode == "starfall") paintStarfall(painter);
+    else paintNodes(painter);
 }
 
 void NetworkBackdrop::paintStarfall(QPainter &painter)
 {
     struct Meteor { qreal startX, startY, angle, trailLen, speed, offset; QString color; };
     static const QList<Meteor> meteors = {
-        {0.05, -0.06, 32.0, 0.22, 0.50, 0.00, kAccent},
-        {0.30, -0.10, 28.0, 0.18, 0.40, 0.35, kAccent2},
-        {0.55, -0.05, 34.0, 0.24, 0.58, 0.65, kAccent},
-        {0.78, -0.08, 30.0, 0.16, 0.36, 0.15, kAccentGreen},
-        {0.92, -0.06, 36.0, 0.20, 0.46, 0.85, kAccent2},
-        {0.18, -0.12, 26.0, 0.14, 0.32, 0.55, kAccent},
-    };
+                                          {0.05, -0.06, 32.0, 0.22, 0.50, 0.00, kAccent},
+                                          {0.30, -0.10, 28.0, 0.18, 0.40, 0.35, kAccent2},
+                                          {0.55, -0.05, 34.0, 0.24, 0.58, 0.65, kAccent},
+                                          {0.78, -0.08, 30.0, 0.16, 0.36, 0.15, kAccentGreen},
+                                          {0.92, -0.06, 36.0, 0.20, 0.46, 0.85, kAccent2},
+                                          {0.18, -0.12, 26.0, 0.14, 0.32, 0.55, kAccent},
+                                          };
 
     const qreal w = width();
     const qreal h = height();
@@ -502,8 +510,7 @@ void NetworkBackdrop::paintStarfall(QPainter &painter)
 
     for (const auto &m : meteors) {
         const qreal cycle = std::fmod(m_phase * m.speed + m.offset, 1.0);
-        if (cycle > 0.55)
-            continue;
+        if (cycle > 0.55) continue;
 
         const qreal rad = m.angle * M_PI / 180.0;
         const qreal travel = (cycle / 0.55) * diag * 1.25;
@@ -513,13 +520,10 @@ void NetworkBackdrop::paintStarfall(QPainter &painter)
         const qreal fadeIn = qMin(1.0, cycle / 0.08);
         const qreal fadeOut = qMin(1.0, (0.55 - cycle) / 0.15);
         const qreal alpha = qMin(fadeIn, fadeOut);
-        if (alpha <= 0.02)
-            continue;
+        if (alpha <= 0.02) continue;
 
-        QColor headColor(m.color);
-        headColor.setAlphaF(float(0.75 * alpha));
-        QColor tailColor(m.color);
-        tailColor.setAlphaF(0.0f);
+        QColor headColor(m.color); headColor.setAlphaF(float(0.75 * alpha));
+        QColor tailColor(m.color); tailColor.setAlphaF(0.0f);
 
         QLinearGradient trailGradient(head, tail);
         trailGradient.setColorAt(0.0, headColor);
@@ -530,8 +534,7 @@ void NetworkBackdrop::paintStarfall(QPainter &painter)
         painter.setPen(trailPen);
         painter.drawLine(head, tail);
 
-        QColor dotColor(Qt::white);
-        dotColor.setAlphaF(float(0.85 * alpha));
+        QColor dotColor(Qt::white); dotColor.setAlphaF(float(0.85 * alpha));
         painter.setPen(Qt::NoPen);
         painter.setBrush(dotColor);
         painter.drawEllipse(head, 1.5, 1.5);
@@ -542,13 +545,13 @@ void NetworkBackdrop::paintNodes(QPainter &painter)
 {
     struct Node { qreal nx, ny, freqX, freqY, phaseX, phaseY; };
     static const QList<Node> nodes = {
-        {0.10, 0.15, 0.25, 0.20, 0.0, 1.1}, {0.30, 0.08, 0.22, 0.28, 1.4, 0.3},
-        {0.55, 0.12, 0.20, 0.24, 2.6, 2.0}, {0.80, 0.20, 0.26, 0.18, 0.7, 1.6},
-        {0.90, 0.45, 0.24, 0.22, 3.1, 0.5}, {0.75, 0.70, 0.18, 0.26, 1.9, 2.4},
-        {0.50, 0.85, 0.22, 0.20, 0.4, 1.3}, {0.20, 0.78, 0.25, 0.24, 2.2, 0.8},
-        {0.08, 0.50, 0.20, 0.28, 1.0, 2.7}, {0.40, 0.45, 0.23, 0.21, 2.8, 1.5},
-        {0.62, 0.55, 0.19, 0.25, 0.2, 2.1}, {0.35, 0.65, 0.21, 0.23, 1.6, 0.6},
-    };
+                                      {0.10, 0.15, 0.25, 0.20, 0.0, 1.1}, {0.30, 0.08, 0.22, 0.28, 1.4, 0.3},
+                                      {0.55, 0.12, 0.20, 0.24, 2.6, 2.0}, {0.80, 0.20, 0.26, 0.18, 0.7, 1.6},
+                                      {0.90, 0.45, 0.24, 0.22, 3.1, 0.5}, {0.75, 0.70, 0.18, 0.26, 1.9, 2.4},
+                                      {0.50, 0.85, 0.22, 0.20, 0.4, 1.3}, {0.20, 0.78, 0.25, 0.24, 2.2, 0.8},
+                                      {0.08, 0.50, 0.20, 0.28, 1.0, 2.7}, {0.40, 0.45, 0.23, 0.21, 2.8, 1.5},
+                                      {0.62, 0.55, 0.19, 0.25, 0.2, 2.1}, {0.35, 0.65, 0.21, 0.23, 1.6, 0.6},
+                                      };
 
     const qreal w = width();
     const qreal h = height();
@@ -573,8 +576,7 @@ void NetworkBackdrop::paintNodes(QPainter &painter)
             const qreal dx = points[i].x() - points[j].x();
             const qreal dy = points[i].y() - points[j].y();
             const qreal dist = std::sqrt(dx * dx + dy * dy);
-            if (dist >= linkDistance)
-                continue;
+            if (dist >= linkDistance) continue;
 
             const qreal strength = 1.0 - dist / linkDistance;
             QColor c(kBorder);
@@ -617,8 +619,7 @@ ToggleSwitch::ToggleSwitch(QWidget *parent)
 
 void ToggleSwitch::setChecked(bool checked, bool animate)
 {
-    if (m_checked == checked)
-        return;
+    if (m_checked == checked) return;
     m_checked = checked;
     const qreal target = checked ? 1.0 : 0.0;
     if (animate) {
@@ -631,11 +632,7 @@ void ToggleSwitch::setChecked(bool checked, bool animate)
     }
 }
 
-void ToggleSwitch::setKnobPos(qreal pos)
-{
-    m_knobPos = pos;
-    update();
-}
+void ToggleSwitch::setKnobPos(qreal pos) { m_knobPos = pos; update(); }
 
 void ToggleSwitch::mousePressEvent(QMouseEvent *event)
 {
@@ -677,11 +674,7 @@ AnimatedIconButton::AnimatedIconButton(const QString &glyph, const QString &base
     m_anim->setEasingCurve(QEasingCurve::OutBack);
 }
 
-void AnimatedIconButton::setSpin(qreal degrees)
-{
-    m_spin = degrees;
-    update();
-}
+void AnimatedIconButton::setSpin(qreal degrees) { m_spin = degrees; update(); }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 void AnimatedIconButton::enterEvent(QEnterEvent *event)
@@ -765,22 +758,12 @@ void AgentAvatar::paintEvent(QPaintEvent *)
     painter.drawText(rect(), Qt::AlignCenter, m_initials);
 }
 
-ClickableLabel::ClickableLabel(QWidget *parent)
-    : QLabel(parent)
-{
-    setCursor(Qt::PointingHandCursor);
-}
-
-ClickableLabel::ClickableLabel(const QString &text, QWidget *parent)
-    : QLabel(text, parent)
-{
-    setCursor(Qt::PointingHandCursor);
-}
+ClickableLabel::ClickableLabel(QWidget *parent) : QLabel(parent) { setCursor(Qt::PointingHandCursor); }
+ClickableLabel::ClickableLabel(const QString &text, QWidget *parent) : QLabel(text, parent) { setCursor(Qt::PointingHandCursor); }
 
 void ClickableLabel::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
-        emit clicked();
+    if (event->button() == Qt::LeftButton) emit clicked();
     QLabel::mousePressEvent(event);
 }
 
@@ -792,16 +775,11 @@ ClickableFrame::ClickableFrame(QWidget *parent)
     applyStyle();
 }
 
-void ClickableFrame::setSelected(bool selected)
-{
-    m_selected = selected;
-    applyStyle();
-}
+void ClickableFrame::setSelected(bool selected) { m_selected = selected; applyStyle(); }
 
 void ClickableFrame::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
-        emit clicked();
+    if (event->button() == Qt::LeftButton) emit clicked();
     QFrame::mousePressEvent(event);
 }
 
@@ -916,9 +894,7 @@ SubagentCard::SubagentCard(const QString &id, const QString &name, QWidget *pare
                                    "font-size: 11px; border: none; background: transparent; color: %1; padding-left: 22px;"
                                    ).arg(kTextSubtle));
     m_roleLabel->setToolTip("Нажмите, чтобы открыть историю переписки");
-    connect(m_roleLabel, &ClickableLabel::clicked, this, [this]() {
-        emit clicked(m_id);
-    });
+    connect(m_roleLabel, &ClickableLabel::clicked, this, [this]() { emit clicked(m_id); });
     outer->addWidget(m_roleLabel);
 
     m_statusLabel = new ClickableLabel("Ожидание", this);
@@ -926,9 +902,7 @@ SubagentCard::SubagentCard(const QString &id, const QString &name, QWidget *pare
                                      "font-size: 11px; border: none; background: transparent; color: %1; padding-left: 22px;"
                                      ).arg(kTextMuted));
     m_statusLabel->setToolTip("Нажмите, чтобы открыть историю переписки");
-    connect(m_statusLabel, &ClickableLabel::clicked, this, [this]() {
-        emit clicked(m_id);
-    });
+    connect(m_statusLabel, &ClickableLabel::clicked, this, [this]() { emit clicked(m_id); });
     outer->addWidget(m_statusLabel);
 
     setRole(QString());
@@ -936,29 +910,16 @@ SubagentCard::SubagentCard(const QString &id, const QString &name, QWidget *pare
     applyStatusStyle();
 }
 
-QString SubagentCard::name() const
-{
-    return m_nameEdit->text();
-}
+QString SubagentCard::name() const { return m_nameEdit->text(); }
 
 void SubagentCard::setName(const QString &name)
 {
-    if (m_nameEdit->text() != name)
-        m_nameEdit->setText(name);
+    if (m_nameEdit->text() != name) m_nameEdit->setText(name);
     m_avatar->setAgentName(name);
 }
 
-void SubagentCard::setRole(const QString &role)
-{
-    m_role = role;
-    refreshRolePreview();
-}
-
-void SubagentCard::setStatus(Status status)
-{
-    m_status = status;
-    applyStatusStyle();
-}
+void SubagentCard::setRole(const QString &role) { m_role = role; refreshRolePreview(); }
+void SubagentCard::setStatus(Status status) { m_status = status; applyStatusStyle(); }
 
 void SubagentCard::setAgentEnabled(bool enabled)
 {
@@ -979,16 +940,11 @@ void SubagentCard::setCollapsed(bool collapsed)
     m_outer->setContentsMargins(collapsed ? 6 : 10, 8, collapsed ? 6 : 8, 8);
 }
 
-void SubagentCard::setSelected(bool selected)
-{
-    m_selected = selected;
-    applyCardStyle();
-}
+void SubagentCard::setSelected(bool selected) { m_selected = selected; applyCardStyle(); }
 
 void SubagentCard::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
-        emit clicked(m_id);
+    if (event->button() == Qt::LeftButton) emit clicked(m_id);
     QFrame::mousePressEvent(event);
 }
 
@@ -1041,8 +997,7 @@ void SubagentCard::applyStatusStyle()
     case Status::Busy:   color = kStatusBusy;   text = "Выполняет"; break;
     case Status::Error:  color = kStatusError;  text = "Ошибка";    break;
     }
-    if (!m_enabled)
-        color = kTextMuted;
+    if (!m_enabled) color = kTextMuted;
     m_statusDot->setStyleSheet(QString("font-size: 11px; border: none; background: transparent; color: %1;").arg(color));
     m_statusLabel->setText(text);
     m_statusLabel->setStyleSheet(QString(
@@ -1058,6 +1013,10 @@ void SubagentCard::refreshRolePreview()
     m_roleLabel->setText(metrics.elidedText(preview, Qt::ElideRight, 208));
 }
 
+// ===========================================================================
+// MainWindow
+// ===========================================================================
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -1066,24 +1025,25 @@ MainWindow::MainWindow(QWidget *parent)
     loadPalette(themeSettings.value("theme", "dark").toString());
 
     ui->setupUi(this);
+    m_agentManager = new agents(this);
+
     setWindowTitle("Agent Console");
-    resize(1040, 700);
+    resize(1080, 700);
     setStyleSheet(QString("QMainWindow { background-color: %1; }").arg(kBgWindow));
 
     m_mainAgentName = "Главный агент";
 
     buildUi();
 
-    QDir agentsDir(QString(APP_SRC_DIR) + "/agents");
-    const QStringList existingAgents = agentsDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QString &folderName : existingAgents) {
-        if (folderName == "main")
-            continue;
-        addSubagent(folderName);
-    }
+    startTime.start();
+    uptimeTimer = new QTimer(this);
+    connect(uptimeTimer, &QTimer::timeout, this, &MainWindow::updateUptime);
+    uptimeTimer->start(1000);
 
     mainStatusCard->setSelected(true);
     refreshComposerPlaceholder();
+
+    loadAgentsFromDisk();
 
     appendMainMessage("Главный агент подключён. Ожидаю команд.", false);
 }
@@ -1092,6 +1052,46 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+// ---------------------------------------------------------------------------
+// Persistence (backend logic layer)
+// ---------------------------------------------------------------------------
+
+void MainWindow::loadAgentsFromDisk()
+{
+    const QStringList existing = m_agentManager->listAgents();
+
+    if (existing.contains(m_mainAgentName)) {
+        m_mainAgentRole = extractRoleFromMinInfo(m_agentManager->getFile(m_mainAgentName, "min_info"));
+    } else {
+        m_agentManager->createAgent(m_mainAgentName, QString());
+        m_agentManager->editFile(m_mainAgentName, buildMinInfo(m_mainAgentName, QString()), "min_info");
+    }
+    m_agentFolderNames[QString()] = m_mainAgentName;
+    setMainAgentName(m_mainAgentName);
+    setMainAgentRole(m_mainAgentRole);
+
+    for (const QString &agentName : existing) {
+        if (agentName == m_mainAgentName)
+            continue;
+        const QString role = extractRoleFromMinInfo(m_agentManager->getFile(agentName, "min_info"));
+        const QString id = addSubagent(agentName, role);
+        m_agentFolderNames[id] = agentName;
+        m_agentEnabled.insert(id, true);
+    }
+}
+
+void MainWindow::syncAgentName(const QString &backendName, const QString &newName)
+{
+    if (backendName.isEmpty())
+        return;
+    const QString role = extractRoleFromMinInfo(m_agentManager->getFile(backendName, "min_info"));
+    m_agentManager->editFile(backendName, buildMinInfo(newName, role), "min_info");
+}
+
+// ---------------------------------------------------------------------------
+// UI construction (interface layer)
+// ---------------------------------------------------------------------------
 
 QWidget *MainWindow::buildSettingsPage()
 {
@@ -1118,9 +1118,9 @@ QWidget *MainWindow::buildSettingsPage()
     auto *backButton = new QPushButton("← Назад к чату", content);
     backButton->setCursor(Qt::PointingHandCursor);
     backButton->setStyleSheet(QString(
-                                   "QPushButton { background: transparent; color: %1; border: none; font-size: 13px; font-weight: 600; padding: 4px 0px; }"
-                                   "QPushButton:hover { color: %2; }"
-                                   ).arg(kTextSubtle, kAccent));
+                                  "QPushButton { background: transparent; color: %1; border: none; font-size: 13px; font-weight: 600; padding: 4px 0px; }"
+                                  "QPushButton:hover { color: %2; }"
+                                  ).arg(kTextSubtle, kAccent));
     connect(backButton, &QPushButton::clicked, this, &MainWindow::showMainView);
     backRow->addWidget(backButton);
     backRow->addStretch(1);
@@ -1177,8 +1177,7 @@ QWidget *MainWindow::buildSettingsPage()
 
         auto *modeToggle = new ToggleSwitch(content);
         modeToggle->setToolTip("Светлая / тёмная версия темы");
-        if (isLight)
-            modeToggle->setChecked(false, false);
+        if (isLight) modeToggle->setChecked(false, false);
 
         auto *moonLabel = new QLabel("🌙", content);
         moonLabel->setStyleSheet(smallLabelStyle());
@@ -1332,8 +1331,7 @@ void MainWindow::performUiRebuild()
     QWidget *oldCentral = centralWidget();
     setStyleSheet(QString("QMainWindow { background-color: %1; }").arg(kBgWindow));
     buildUi();
-    if (oldCentral)
-        oldCentral->deleteLater();
+    if (oldCentral) oldCentral->deleteLater();
 
     m_cards.clear();
     for (const auto &snap : snapshot) {
@@ -1349,6 +1347,8 @@ void MainWindow::performUiRebuild()
         sidebarPanel->setFixedWidth(kSidebarCollapsedWidth);
         applyCollapsedVisualState();
     }
+
+    setMainAgentRole(m_mainAgentRole);
 
     if (!activeId.isEmpty() && m_cards.contains(activeId))
         selectSubagent(activeId);
@@ -1389,15 +1389,8 @@ void MainWindow::buildUi()
     setCentralWidget(backdrop);
 }
 
-void MainWindow::showSettings()
-{
-    pageStack->setCurrentIndex(1);
-}
-
-void MainWindow::showMainView()
-{
-    pageStack->setCurrentIndex(0);
-}
+void MainWindow::showSettings() { pageStack->setCurrentIndex(1); }
+void MainWindow::showMainView() { pageStack->setCurrentIndex(0); }
 
 QWidget *MainWindow::buildMainView()
 {
@@ -1431,8 +1424,11 @@ QWidget *MainWindow::buildSidebar()
     mainStatusCard = new ClickableFrame(panel);
     connect(mainStatusCard, &ClickableFrame::clicked, this, &MainWindow::selectMainAgent);
 
-    auto *mainRow = new QHBoxLayout(mainStatusCard);
-    mainRow->setContentsMargins(10, 8, 10, 8);
+    auto *statusLayout = new QVBoxLayout(mainStatusCard);
+    statusLayout->setContentsMargins(10, 8, 10, 8);
+    statusLayout->setSpacing(4);
+
+    auto *mainRow = new QHBoxLayout();
     mainRow->setSpacing(8);
 
     mainAvatar = new AgentAvatar(mainStatusCard);
@@ -1458,8 +1454,22 @@ QWidget *MainWindow::buildSidebar()
                                     "QLineEdit:focus { color: #ffffff; }"
                                     ).arg(kTextMain));
     connect(mainNameEdit, &QLineEdit::editingFinished, this, [this]() {
-        setMainAgentName(mainNameEdit->text());
-        emit mainAgentRenamed(m_mainAgentName);
+        const QString oldName = m_mainAgentName;
+        const QString newName = mainNameEdit->text().trimmed();
+
+        if (newName.isEmpty()) {
+            // Пустое имя недопустимо — откатываем поле к прежнему значению.
+            setMainAgentName(oldName);
+            return;
+        }
+        if (newName != oldName) {
+            const QString oldBackendName = m_agentFolderNames.value(QString(), oldName);
+            m_agentManager->changeAgentName(oldBackendName, newName);
+            syncAgentName(newName, newName);
+            m_agentFolderNames[QString()] = newName;
+            setMainAgentName(newName);
+            emit mainAgentRenamed(m_mainAgentName);
+        }
     });
 
     mainSettingsButton = new AnimatedIconButton("⚙", kTextMuted, kAccent, mainStatusCard);
@@ -1472,6 +1482,29 @@ QWidget *MainWindow::buildSidebar()
     mainRow->addWidget(agentStatusDot);
     mainRow->addWidget(mainNameEdit, 1);
     mainRow->addWidget(mainSettingsButton);
+    statusLayout->addLayout(mainRow);
+
+    // Роль-бейдж и аптайм — из "логики": min_info хранит роль, а таймер
+    // работы приложения раньше отображался отдельным лейблом. Здесь оба
+    // помещены в одну строку под именем, стилистически как в SubagentCard.
+    auto *metaRow = new QHBoxLayout();
+    metaRow->setSpacing(8);
+
+    mainRoleLabel = new ClickableLabel(mainStatusCard);
+    mainRoleLabel->setStyleSheet(QString(
+                                     "font-size: 11px; border: none; background: transparent; color: %1; padding-left: 22px;"
+                                     ).arg(kTextSubtle));
+    mainRoleLabel->setToolTip("Роль главного агента");
+    connect(mainRoleLabel, &ClickableLabel::clicked, this, &MainWindow::selectMainAgent);
+
+    uptimeLabel = new ClickableLabel("00:00:00", mainStatusCard);
+    uptimeLabel->setStyleSheet(QString("font-size: 10px; border: none; background: transparent; color: %1;").arg(kTextMuted));
+    uptimeLabel->setToolTip("Время работы приложения");
+    connect(uptimeLabel, &ClickableLabel::clicked, this, &MainWindow::selectMainAgent);
+
+    metaRow->addWidget(mainRoleLabel, 1);
+    metaRow->addWidget(uptimeLabel, 0, Qt::AlignRight);
+    statusLayout->addLayout(metaRow);
 
     layout->addWidget(mainStatusCard);
 
@@ -1501,6 +1534,12 @@ QWidget *MainWindow::buildSidebar()
     addSubagentButton->setStyleSheet(iconButtonStyle(kAccent, "rgba(137, 180, 250, 0.15)"));
     connect(addSubagentButton, &QPushButton::clicked, this, [this]() {
         const QString id = addSubagent();
+        const QString backendName = m_agentFolderNames.value(id);
+
+        // Создаём агента на диске (логика из agents-менеджера).
+        m_agentManager->createAgent(backendName, QString());
+        m_agentManager->editFile(backendName, buildMinInfo(backendName, QString()), "min_info");
+
         emit addSubagentRequested();
         selectSubagent(id);
     });
@@ -1662,15 +1701,8 @@ QWidget *MainWindow::buildChatArea()
     return panel;
 }
 
-void MainWindow::appendMainMessage(const QString &text, bool isUser)
-{
-    appendHistory(QString(), text, isUser);
-}
-
-void MainWindow::appendSubagentMessage(const QString &id, const QString &text, bool isUser)
-{
-    appendHistory(id, text, isUser);
-}
+void MainWindow::appendMainMessage(const QString &text, bool isUser) { appendHistory(QString(), text, isUser); }
+void MainWindow::appendSubagentMessage(const QString &id, const QString &text, bool isUser) { appendHistory(id, text, isUser); }
 
 void MainWindow::setAgentActive(bool active)
 {
@@ -1695,6 +1727,12 @@ void MainWindow::setMainAgentName(const QString &name)
 void MainWindow::setMainAgentRole(const QString &role)
 {
     m_mainAgentRole = role;
+    if (mainRoleLabel) {
+        QString preview = role.trimmed().isEmpty() ? QString("Роль не задана") : role.trimmed();
+        preview.replace('\n', ' ');
+        const QFontMetrics metrics(mainRoleLabel->font());
+        mainRoleLabel->setText(metrics.elidedText(preview, Qt::ElideRight, 170));
+    }
 }
 
 SubagentCard *MainWindow::createCardWidget(const QString &id, const QString &name)
@@ -1705,15 +1743,25 @@ SubagentCard *MainWindow::createCardWidget(const QString &id, const QString &nam
     connect(card, &SubagentCard::clicked, this, &MainWindow::selectSubagent);
     connect(card, &SubagentCard::settingsRequested, this, &MainWindow::openSubagentSettings);
     connect(card, &SubagentCard::nameEdited, this, [this](const QString &cardId, const QString &newName) {
-        const QString oldName = m_agentFolderNames.value(cardId);
-        if (oldName != newName) {
-            template_agents::Rename(oldName, newName);
-            m_agentFolderNames.insert(cardId, newName);
+        const QString trimmed = newName.trimmed();
+        const QString oldBackendName = m_agentFolderNames.value(cardId);
+
+        if (trimmed.isEmpty()) {
+            // Пустое имя недопустимо — откатываем поле к прежнему значению.
+            setSubagentName(cardId, oldBackendName);
+            return;
         }
-        emit subagentRenamed(cardId, newName);
+        if (trimmed != oldBackendName) {
+            if (!oldBackendName.isEmpty()) {
+                m_agentManager->changeAgentName(oldBackendName, trimmed);
+                syncAgentName(trimmed, trimmed);
+            }
+            m_agentFolderNames.insert(cardId, trimmed);
+        }
+        emit subagentRenamed(cardId, trimmed);
         if (cardId == m_activeAgentId) {
-            chatHeaderLabel->setText(newName);
-            chatHeaderAvatar->setAgentName(newName);
+            chatHeaderLabel->setText(trimmed);
+            chatHeaderAvatar->setAgentName(trimmed);
         }
     });
     connect(card, &SubagentCard::enabledToggled, this, [this](const QString &cardId, bool enabled) {
@@ -1728,8 +1776,6 @@ QString MainWindow::addSubagent(const QString &name, const QString &role)
     ++m_subagentSeq;
     const QString id = QString("agent-%1").arg(m_subagentSeq);
     const QString displayName = name.isEmpty() ? QString("Агент %1").arg(m_subagentSeq) : name;
-
-    template_agents::Generate(displayName);
 
     auto *card = createCardWidget(id, displayName);
     card->setRole(role);
@@ -1782,8 +1828,10 @@ void MainWindow::applyCollapsedVisualState()
     agentStatusDot->setVisible(!m_agentListCollapsed);
     sidebarTitleLabel->setVisible(!m_agentListCollapsed);
     subagentCountLabel->setVisible(!m_agentListCollapsed);
+    if (mainRoleLabel) mainRoleLabel->setVisible(!m_agentListCollapsed);
+    if (uptimeLabel) uptimeLabel->setVisible(!m_agentListCollapsed);
 
-    if (auto *mainRow = qobject_cast<QHBoxLayout *>(mainStatusCard->layout()))
+    if (auto *mainRow = qobject_cast<QVBoxLayout *>(mainStatusCard->layout()))
         mainRow->setContentsMargins(m_agentListCollapsed ? 6 : 10, 8, m_agentListCollapsed ? 6 : 10, 8);
 
     for (SubagentCard *card : std::as_const(m_cards))
@@ -1795,8 +1843,7 @@ void MainWindow::applyCollapsedVisualState()
 void MainWindow::setSubagentStatus(const QString &id, AgentStatus status)
 {
     auto *card = m_cards.value(id, nullptr);
-    if (!card)
-        return;
+    if (!card) return;
     switch (status) {
     case AgentStatus::Idle:   card->setStatus(SubagentCard::Status::Idle);   break;
     case AgentStatus::Active: card->setStatus(SubagentCard::Status::Active); break;
@@ -1808,8 +1855,7 @@ void MainWindow::setSubagentStatus(const QString &id, AgentStatus status)
 void MainWindow::setSubagentName(const QString &id, const QString &name)
 {
     auto *card = m_cards.value(id, nullptr);
-    if (!card)
-        return;
+    if (!card) return;
     card->setName(name);
     if (id == m_activeAgentId) {
         chatHeaderLabel->setText(name);
@@ -1831,19 +1877,15 @@ QString MainWindow::subagentName(const QString &id) const
 
 QString MainWindow::subagentRole(const QString &id) const
 {
-    auto *card = m_cards.value(id, nullptr);
-    return card ? card->role() : QString();
+    // Диск — источник истины по роли (min_info), как во второй версии.
+    const QString backendName = m_agentFolderNames.value(id);
+    if (backendName.isEmpty())
+        return QString();
+    return extractRoleFromMinInfo(m_agentManager->getFile(backendName, "min_info"));
 }
 
-bool MainWindow::hasSubagent(const QString &id) const
-{
-    return m_cards.contains(id);
-}
-
-QStringList MainWindow::subagentIds() const
-{
-    return m_cards.keys();
-}
+bool MainWindow::hasSubagent(const QString &id) const { return m_cards.contains(id); }
+QStringList MainWindow::subagentIds() const { return m_cards.keys(); }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
@@ -1875,8 +1917,7 @@ void MainWindow::selectMainAgent()
 void MainWindow::selectSubagent(const QString &id)
 {
     auto *target = m_cards.value(id, nullptr);
-    if (!target)
-        return;
+    if (!target) return;
     m_activeAgentId = id;
     mainStatusCard->setSelected(false);
     for (SubagentCard *card : std::as_const(m_cards))
@@ -1891,9 +1932,7 @@ void MainWindow::selectSubagent(const QString &id)
 
 void MainWindow::refreshComposerPlaceholder()
 {
-    const QString targetName = m_activeAgentId.isEmpty()
-    ? m_mainAgentName
-    : subagentName(m_activeAgentId);
+    const QString targetName = m_activeAgentId.isEmpty() ? m_mainAgentName : subagentName(m_activeAgentId);
     messageInput->setPlaceholderText(
         QString("Написать агенту «%1»…  (Enter — отправить, Shift+Enter — новая строка)").arg(targetName));
 }
@@ -1917,8 +1956,8 @@ public:
         bubble->setObjectName("bubble");
         bubble->setMaximumWidth(440);
         const QString bg = isUser
-            ? QString("qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %1, stop:1 %2)").arg(kAccent, kAccent2)
-            : kBgWindow;
+                               ? QString("qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %1, stop:1 %2)").arg(kAccent, kAccent2)
+                               : kBgWindow;
         bubble->setStyleSheet(QString(
                                   "QFrame#bubble {"
                                   "   background: %1;"
@@ -1935,10 +1974,10 @@ public:
         headerRow->setSpacing(8);
         auto *authorLabel = new QLabel(author, bubble);
         authorLabel->setStyleSheet(QString("font-size: 11px; font-weight: 700; color: %1; border:none; background:transparent;")
-                                        .arg(isUser ? "rgba(255,255,255,0.85)" : kAccent));
+                                       .arg(isUser ? "rgba(255,255,255,0.85)" : kAccent));
         auto *timeLabel = new QLabel(time, bubble);
         timeLabel->setStyleSheet(QString("font-size: 10px; color: %1; border:none; background:transparent;")
-                                      .arg(isUser ? "rgba(255,255,255,0.6)" : kTextMuted));
+                                     .arg(isUser ? "rgba(255,255,255,0.6)" : kTextMuted));
         headerRow->addWidget(authorLabel);
         headerRow->addStretch();
         headerRow->addWidget(timeLabel);
@@ -1948,7 +1987,7 @@ public:
         textLabel->setTextFormat(Qt::RichText);
         textLabel->setWordWrap(true);
         textLabel->setStyleSheet(QString("font-size: 13px; color: %1; border:none; background:transparent;")
-                                      .arg(isUser ? "#ffffff" : kTextMain));
+                                     .arg(isUser ? "#ffffff" : kTextMain));
 
         bubbleLayout->addLayout(headerRow);
         bubbleLayout->addWidget(textLabel);
@@ -2016,7 +2055,7 @@ void MainWindow::redrawActiveHistory()
         renderMessage(entry);
 }
 
-MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString &title, const QString &promptAgentName, QString &name, QString &role, bool allowDelete)
+MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString &title, const QString &backendAgentName, QString &name, QString &role, bool allowDelete)
 {
     QDialog dialog(this);
     dialog.setWindowTitle(title);
@@ -2056,7 +2095,7 @@ MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString
     auto *nameEdit = new QLineEdit(name, &dialog);
     nameEdit->setPlaceholderText("Название агента");
 
-    auto *roleLabel = new QLabel("Роль (заметка, на ответы ИИ не влияет)", &dialog);
+    auto *roleLabel = new QLabel("Роль (короткая заметка, отображается бейджем под именем)", &dialog);
     auto *roleEdit = new QTextEdit(&dialog);
     roleEdit->setPlainText(role);
     roleEdit->setPlaceholderText("Короткая заметка про агента…");
@@ -2068,14 +2107,12 @@ MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString
     static const QList<QPair<QString, QString>> promptParts = {
         {"soul", "Soul"},
         {"system_prompt", "System Prompt"},
-        {"style", "Style"},
-        {"stickers", "Stickers"}
     };
 
     QMap<QString, QTextEdit *> promptEdits;
     for (const auto &part : promptParts) {
         auto *edit = new QTextEdit(promptTabs);
-        edit->setPlainText(MCP::GetPrompt(promptAgentName, part.first));
+        edit->setPlainText(m_agentManager->getFile(backendAgentName, part.first));
         promptTabs->addTab(edit, part.second);
         promptEdits.insert(part.first, edit);
     }
@@ -2094,7 +2131,7 @@ MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString
                                         ).arg(kAccentRed));
         connect(deleteButton, &QPushButton::clicked, &dialog, [&dialog]() {
             if (QMessageBox::question(&dialog, "Удалить агента",
-                                       "Удалить этого агента? Промпты в его папке останутся на диске.") == QMessageBox::Yes)
+                                      "Удалить этого агента? Файлы агента будут удалены с диска.") == QMessageBox::Yes)
                 dialog.done(2);
         });
         buttons->addButton(deleteButton, QDialogButtonBox::DestructiveRole);
@@ -2118,7 +2155,7 @@ MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString
     role = roleEdit->toPlainText();
 
     for (auto it = promptEdits.constBegin(); it != promptEdits.constEnd(); ++it)
-        MCP::SavePrompt(promptAgentName, it.key(), it.value()->toPlainText());
+        m_agentManager->editFile(backendAgentName, it.value()->toPlainText(), it.key());
 
     return AgentSettingsResult::Saved;
 }
@@ -2129,8 +2166,7 @@ void MainWindow::openBackgroundPicker()
         this, "Выберите изображение или GIF", QDir::homePath(),
         "Изображения (*.png *.jpg *.jpeg *.gif *.webp *.bmp)");
 
-    if (path.isEmpty())
-        return;
+    if (path.isEmpty()) return;
 
     QSettings settings(QString(APP_SRC_DIR) + "/config.ini", QSettings::IniFormat);
     settings.setValue("backdrop_mode", "image");
@@ -2194,7 +2230,7 @@ void MainWindow::openThemeCreator(const QString &themeId)
 
         auto refreshSwatch = [swatch, &colors, key]() {
             swatch->setStyleSheet(QString("background-color: %1; border: 1px solid rgba(128,128,128,0.4); border-radius: 8px;")
-                                       .arg(colors[key].name()));
+                                      .arg(colors[key].name()));
         };
         refreshSwatch();
 
@@ -2311,13 +2347,26 @@ void MainWindow::openAppSettings()
 
 void MainWindow::openMainAgentSettings()
 {
+    const QString oldBackendName = m_agentFolderNames.value(QString(), m_mainAgentName);
+
     QString name = m_mainAgentName;
     QString role = m_mainAgentRole;
-    if (runAgentSettingsDialog("Настройки главного агента", "main", name, role, false) != AgentSettingsResult::Saved)
+    if (runAgentSettingsDialog("Настройки главного агента", oldBackendName, name, role, false) != AgentSettingsResult::Saved)
         return;
 
-    setMainAgentName(name);
+    const QString finalName = name.isEmpty() ? oldBackendName : name;
+    QString effectiveBackendName = oldBackendName;
+
+    if (!oldBackendName.isEmpty() && finalName != oldBackendName) {
+        m_agentManager->changeAgentName(oldBackendName, finalName);
+        m_agentFolderNames[QString()] = finalName;
+        effectiveBackendName = finalName;
+    }
+
+    setMainAgentName(finalName);
     setMainAgentRole(role);
+    m_agentManager->editFile(effectiveBackendName, buildMinInfo(m_mainAgentName, role), "min_info");
+
     emit mainAgentRenamed(m_mainAgentName);
     emit mainAgentRoleChanged(m_mainAgentRole);
 }
@@ -2325,14 +2374,18 @@ void MainWindow::openMainAgentSettings()
 void MainWindow::openSubagentSettings(const QString &id)
 {
     auto *card = m_cards.value(id, nullptr);
-    if (!card)
-        return;
+    if (!card) return;
+
+    const QString oldBackendName = m_agentFolderNames.value(id, card->name());
 
     QString name = card->name();
-    QString role = card->role();
-    const AgentSettingsResult result = runAgentSettingsDialog("Настройки агента", m_agentFolderNames.value(id), name, role, true);
+    QString role = subagentRole(id);
+    const AgentSettingsResult result = runAgentSettingsDialog("Настройки агента", oldBackendName, name, role, true);
 
     if (result == AgentSettingsResult::DeleteRequested) {
+        if (!oldBackendName.isEmpty())
+            m_agentManager->deleteAgent(oldBackendName);
+        m_agentFolderNames.remove(id);
         emit subagentRemoveRequested(id);
         removeSubagent(id);
         return;
@@ -2341,13 +2394,18 @@ void MainWindow::openSubagentSettings(const QString &id)
         return;
 
     const QString finalName = name.isEmpty() ? card->name() : name;
-    const QString oldName = m_agentFolderNames.value(id);
-    if (oldName != finalName) {
-        template_agents::Rename(oldName, finalName);
+    QString effectiveBackendName = oldBackendName;
+
+    if (!oldBackendName.isEmpty() && finalName != oldBackendName) {
+        m_agentManager->changeAgentName(oldBackendName, finalName);
         m_agentFolderNames.insert(id, finalName);
+        effectiveBackendName = finalName;
     }
+
     setSubagentName(id, finalName);
     setSubagentRole(id, role);
+    m_agentManager->editFile(effectiveBackendName, buildMinInfo(finalName, role), "min_info");
+
     emit subagentRenamed(id, finalName);
     emit subagentRoleChanged(id, role);
 }
@@ -2367,8 +2425,8 @@ void MainWindow::handleSendClicked()
     }
 
     appendHistory(m_activeAgentId, text, true);
-    const QString promptName = m_activeAgentId.isEmpty() ? QStringLiteral("main") : m_agentFolderNames.value(m_activeAgentId);
-    emit messageSubmitted(m_activeAgentId, promptName, text);
+    const QString backendName = m_agentFolderNames.value(m_activeAgentId, m_mainAgentName);
+    emit messageSubmitted(m_activeAgentId, backendName, text);
     messageInput->clear();
 }
 
@@ -2377,3 +2435,16 @@ void MainWindow::receiveAgentReply(const QString &agentId, const QString &text)
     appendHistory(agentId, text, false);
 }
 
+void MainWindow::updateUptime()
+{
+    const qint64 secs = startTime.elapsed() / 1000;
+    const int hours = secs / 3600;
+    const int mins = (secs % 3600) / 60;
+    const int seconds = secs % 60;
+    if (uptimeLabel) {
+        uptimeLabel->setText(QString("%1:%2:%3")
+                                 .arg(hours, 2, 10, QChar('0'))
+                                 .arg(mins, 2, 10, QChar('0'))
+                                 .arg(seconds, 2, 10, QChar('0')));
+    }
+}

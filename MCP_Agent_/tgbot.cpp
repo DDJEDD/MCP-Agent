@@ -1,26 +1,25 @@
 #include "tgbot.h"
-#include "mcp.h"
-#include "template_agents.h"
+#include "filemanager.h"
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
 #include <QTimer>
-#include <QSettings>
-
+#include <optional>
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
-    QSettings settings(QString(APP_SRC_DIR) + "/config.ini", QSettings::IniFormat);
-    token = settings.value("telegram_token", "8979215541:AAGMuBOHM81rE3y8R-iK7wsFuAGfTy4ckXI").toString();
-    geminiKey = settings.value("gemini_api_key", QString(qgetenv("GEMINI_KEY"))).toString();
-
-    template_agents::Generate("main");
     poll();
     phone = new phonenumber(this);
-}
+    m_agents = new agents(this);
+    connect(m_agents, &agents::requestSendMessagesDelayed,
+            this, &TgBot::sendMessagesDelayed);
 
-void TgBot::applyCredentials(const QString &botToken, const QString &geminiApiKey) {
-    token = botToken;
-    geminiKey = geminiApiKey;
+    connect(m_agents, &agents::requestSendPhoto,
+            this, &TgBot::sendPhoto);
+
+    connect(m_agents, &agents::requestSendSticker,
+            this, &TgBot::sendSticker);
+    connect(m_agents, &agents::requestReqAgent,
+            this, &TgBot::reqAgent);
 }
 void TgBot::checkreqPhoto(const QJsonObject &response, qint64 chatId, const QString &prompt) {
     if (response.contains("error")) {
@@ -52,29 +51,7 @@ void TgBot::checkreqPhoto(const QJsonObject &response, qint64 chatId, const QStr
 
     sendMessage(chatId, "В ответе ИИ не оказалось изображения.");
 }
-static QJsonDocument extractFirstJsonObject(const QString &rawText, QJsonParseError *error) {
-    int depth = 0;
-    bool inString = false, escaped = false;
-    int endPos = -1;
 
-    for (int i = 0; i < rawText.length(); ++i) {
-        QChar c = rawText[i];
-        if (escaped) { escaped = false; continue; }
-        if (c == '\\' && inString) { escaped = true; continue; }
-        if (c == '"') { inString = !inString; continue; }
-        if (inString) continue;
-
-        if (c == '{') depth++;
-        else if (c == '}') {
-            if (--depth == 0) { endPos = i; break; }
-        }
-    }
-
-    if (endPos != -1) {
-        return QJsonDocument::fromJson(rawText.left(endPos + 1).trimmed().toUtf8(), error);
-    }
-    return QJsonDocument();
-}
 void TgBot::downloadFile(const QString &fileId, std::function<void(const QByteArray &)> callback) {
     QString path = QString("/bot%1/getFile").arg(token);
     QJsonObject body{{"file_id", fileId}};
@@ -139,133 +116,41 @@ void TgBot::processPhotoMessage(const QString &fileId, const QString &text, qint
             return;
         }
 
-        reqAI(text.isEmpty() ? "Что на этой картинке?" : text, chatId, imageData);
+        reqAgent(text.isEmpty() ? "Что на этой картинке?" : text, chatId, imageData);
     });
 }
 void TgBot::checkreq(const QJsonObject &response, qint64 chatId, const QString &text, const QMap<QString, QString> &nums) {
-    qDebug() << "Ответ от Gemini:" << response;
-
-    if (response.contains("error")) {
-        QJsonObject err = response["error"].toObject();
-        qWarning() << "Gemini API вернул ошибку:" << err["message"].toString();
-        sendMessage(chatId, "Ошибка при обращении к ИИ. Попробуйте позже.");
-        return;
-    }
 
     QJsonArray candidates = response["candidates"].toArray();
-    if (candidates.isEmpty()) {
-        qWarning() << "В ответе Gemini нет 'candidates'!" << response;
-        sendMessage(chatId, "ИИ не смог сформировать ответ. Попробуйте переформулировать вопрос.");
-        return;
-    }
-
-    QJsonObject firstCandidate = candidates[0].toObject();
-    QJsonArray parts = firstCandidate["content"].toObject()["parts"].toArray();
-    if (parts.isEmpty()) {
-        qWarning() << "В ответе Gemini пустой 'parts'!";
-        sendMessage(chatId, "ИИ вернул пустой ответ. Попробуйте ещё раз.");
-        return;
-    }
-
-    QString rawAiText = parts[0].toObject()["text"].toString().trimmed();
-    qDebug() << "Сырой текст от Gemini:" << rawAiText;
-
-    if (rawAiText.startsWith("```")) {
-        rawAiText.remove(QRegularExpression("^```(?:json)?\\s*"));
-        rawAiText.remove(QRegularExpression("\\s*```$"));
-        rawAiText = rawAiText.trimmed();
-    }
-
-    if (rawAiText.isEmpty()) {
-        qWarning() << "После очистки текст от Gemini оказался пустым!";
-        sendMessage(chatId, "ИИ вернул пустой ответ. Попробуйте ещё раз.");
-        return;
-    }
-
-    QJsonParseError parseError;
-    QJsonDocument aiJsonDoc = QJsonDocument::fromJson(rawAiText.toUtf8(), &parseError);
-
-    if (parseError.error == QJsonParseError::GarbageAtEnd) {
-
-        aiJsonDoc = extractFirstJsonObject(rawAiText, &parseError);
-        if (aiJsonDoc.isObject()) {
-            parseError.error = QJsonParseError::NoError;
+    if (!candidates.isEmpty()) {
+        QJsonArray parts = candidates[0].toObject()["content"].toObject()["parts"].toArray();
+        if (!parts.isEmpty()) {
+            QString aiText = parts[0].toObject()["text"].toString();
+            qDebug().noquote() << "Ответ от Gemini (текст):" << aiText;
         }
     }
 
-    if (parseError.error != QJsonParseError::NoError || !aiJsonDoc.isObject()) {
-        qWarning() << "JSON ERROR:" << parseError.errorString() << "OFFSET:" << parseError.offset;
-        qWarning().noquote() << rawAiText;
-        sendMessage(chatId, "ИИ вернул некорректный JSON.");
+    auto optCalls = JSONParser::parse(response, nums, *phone);
+    if (!optCalls.has_value() || optCalls->isEmpty()) {
+        qWarning() << "Не удалось распарсить ответ от Gemini или стек вызовов пуст.";
+        sendMessage(chatId, "Ошибка при обработке ответа от ИИ.");
         return;
     }
 
-    QJsonObject aiJsonObj = aiJsonDoc.object();
-    QList<DelayedMessage> messages;
-    QJsonArray messagesArray = aiJsonObj["messages"].toArray();
+    const QList<AgentCall> &calls = *optCalls;
+    qDebug() << "[TgBot] Получено вызовов сабагентов:" << calls.size();
 
-    for (const QJsonValue &value : messagesArray) {
-        QJsonObject messageObj = value.toObject();
-
-        QString messageText =
-            messageObj["text"].toString().trimmed();
-
-        int delay =
-            messageObj["delay"].toInt();
-
-        if (messageText.isEmpty())
-            continue;
+    for (const AgentCall &call : calls) {
+        qDebug() << "  -> Запуск функции:" << call.functionName
+                 << "для агента:" << call.agentName
+                 << "ID:" << call.id;
 
 
-        messageText = phone->restoreNumbers(messageText, nums);
-
-
-        delay = qBound(0, delay, 5000);
-
-        messages.append({
-            messageText,
-            delay
-        });
+        this->m_agents->executeCall(call.id, call.agentName, call.args, call.functionName, chatId, text, call.role);
     }
-
-    if (messages.isEmpty()) {
-        qWarning() << "Gemini не вернул messages!";
-        sendMessage(chatId, "ИИ вернул пустой ответ.");
-        return;
-    }
-
-    QString gifUrl = aiJsonObj["gif"].toString().trimmed();
-    QString photoUrl = aiJsonObj["photo"].toString().trimmed();
-    QString stickerUrl = aiJsonObj["sticker"].toString().trimmed();
-    QString fullAiText;
-
-    for (const auto &msg : messages) {
-        if (!fullAiText.isEmpty())
-            fullAiText += "\n";
-
-        fullAiText += msg.text;
-    }
-
-    MCP::SaveMessage(chatId, text, fullAiText);
-    if (!photoUrl.isEmpty()) {
-        sendPhoto(chatId, photoUrl, fullAiText);
-    }else if (!gifUrl.isEmpty()) {
-        sendAnimation(chatId, gifUrl, fullAiText);
-
-    } else if(!stickerUrl.isEmpty()) {
-        sendSticker(chatId, stickerUrl);
-        QTimer::singleShot(2000, this, [this, chatId, messages]() {
-            sendMessagesDelayed(chatId, messages);
-        });
-    }
-
-    else {
-        sendMessagesDelayed(chatId, messages);
-    }
-
 }
 
-void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imageData) {
+void TgBot::reqAgent(const QString &userText, qint64 chatId,const QString &agentName, const QByteArray &imageData) {
 
 
     if (geminiKey.isEmpty()) {
@@ -274,9 +159,12 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
         return;
     }
     QString aiHost = "generativelanguage.googleapis.com";
-    QString aiPath = QString("/v1beta/models/gemini-3.5-flash:generateContent?key=%1").arg(geminiKey);
+    QString aiPath = QString("/v1beta/models/gemini-3.6-flash:generateContent?key=%1").arg(geminiKey);
 
-    QString final = MCP::BuildSystemPrompt("main") + "\nHISTORY:" + MCP::GetOldMessages(chatId);
+    QStringList agentNames = m_agents->listAgents();
+    QString agentsListStr = "Доступные субагенты в системе: " + agentNames.join(", ");
+
+    QString final = m_agents->getFullPrompt(agentName) + "\nHISTORY:"  + "\n\n[СИСТЕМНАЯ СПРАВКА]\n" + agentsListStr + FileManager::GetOldMessages(chatId);
     textwithoutnum finaluserText = phone->HideNumbers(userText);
     QString fullContextText = final + "\n" + finaluserText.usertext;
 
@@ -309,80 +197,11 @@ void TgBot::reqAI(const QString &userText, qint64 chatId, const QByteArray &imag
     generationConfig["maxOutputTokens"] = 4096;
     body["generationConfig"] = generationConfig;
 
+
     QMap<QString, QString> nums = finaluserText.numbers;
     requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText,nums](const QJsonObject &response) {
         checkreq(response, chatId, userText, nums);
     });
-}
-
-void TgBot::handleUiMessage(const QString &agentId, const QString &promptName, const QString &text) {
-    if (geminiKey.isEmpty()) {
-        emit uiReplyReady(agentId, "Ошибка конфигурации бота: не задан GEMINI_KEY.");
-        return;
-    }
-
-    QString aiHost = "generativelanguage.googleapis.com";
-    QString aiPath = QString("/v1beta/models/gemini-3.5-flash:generateContent?key=%1").arg(geminiKey);
-
-    QString fullContextText = MCP::BuildSystemPrompt(promptName) + "\n" + text;
-
-    QJsonObject textPart{{"text", fullContextText}};
-    QJsonArray partsArray{textPart};
-    QJsonObject contentsObj{{"parts", partsArray}};
-    QJsonArray contentsArray{contentsObj};
-
-    QJsonObject body;
-    body["contents"] = contentsArray;
-    body["generationConfig"] = QJsonObject{{"responseMimeType", "application/json"}, {"maxOutputTokens", 4096}};
-
-    Requests::apiCall(this, aiHost, aiPath, body, {}, [this, agentId](const QJsonObject &response) {
-        emit uiReplyReady(agentId, extractAgentText(response));
-    });
-}
-
-QString TgBot::extractAgentText(const QJsonObject &response) {
-    if (response.contains("error"))
-        return "Ошибка при обращении к ИИ. Попробуйте позже.";
-
-    QJsonArray candidates = response["candidates"].toArray();
-    if (candidates.isEmpty())
-        return "ИИ не смог сформировать ответ.";
-
-    QJsonObject firstCandidate = candidates[0].toObject();
-    QJsonArray parts = firstCandidate["content"].toObject()["parts"].toArray();
-    if (parts.isEmpty())
-        return "ИИ вернул пустой ответ.";
-
-    QString rawAiText = parts[0].toObject()["text"].toString().trimmed();
-    if (rawAiText.startsWith("```")) {
-        rawAiText.remove(QRegularExpression("^```(?:json)?\\s*"));
-        rawAiText.remove(QRegularExpression("\\s*```$"));
-        rawAiText = rawAiText.trimmed();
-    }
-
-    QJsonParseError parseError;
-    QJsonDocument aiJsonDoc = QJsonDocument::fromJson(rawAiText.toUtf8(), &parseError);
-    if (parseError.error == QJsonParseError::GarbageAtEnd) {
-        aiJsonDoc = extractFirstJsonObject(rawAiText, &parseError);
-        if (aiJsonDoc.isObject())
-            parseError.error = QJsonParseError::NoError;
-    }
-
-    if (parseError.error != QJsonParseError::NoError || !aiJsonDoc.isObject())
-        return "ИИ вернул некорректный JSON.";
-
-    QJsonArray messagesArray = aiJsonDoc.object()["messages"].toArray();
-    QString fullAiText;
-    for (const QJsonValue &value : messagesArray) {
-        QString messageText = value.toObject()["text"].toString().trimmed();
-        if (messageText.isEmpty())
-            continue;
-        if (!fullAiText.isEmpty())
-            fullAiText += "\n";
-        fullAiText += messageText;
-    }
-
-    return fullAiText.isEmpty() ? "ИИ вернул пустой ответ." : fullAiText;
 }
 
 void TgBot::poll() {
@@ -392,7 +211,7 @@ void TgBot::poll() {
     requests->apiCall(this, host, path, body, {}, [this](const QJsonObject &resp) {
         if (!resp.value("ok").toBool()) {
             qWarning() << "getUpdates вернул ошибку:" << resp;
-            QTimer::singleShot(3000, this, &TgBot::poll);
+            poll();
             return;
         }
 
@@ -421,13 +240,13 @@ void TgBot::poll() {
 
             if (chatId != 0 && !text.isEmpty())
                 if (text.startsWith("/image")) {
-                    QString promptText = text.mid(9).trimmed();
+                    QString promptText = text.mid(6).trimmed();
                     reqPhotoAI(promptText, chatId);
                 } else if (text == "/start") {
                     sendMessage(chatId, "На связи Олег Сигмов, senior AI-ассистент по разработке, DevOps и системной инженерии из Sigmov LTD. А ещё у нас на вооружении появилась новая фича — команда /generate. Напиши её, опиши задачу, и я сгенерирую тебе сочный арт, техническую схему или архитектурный концепт.");
                 } else {
 
-                    reqAI(text, chatId);
+                    reqAgent(text, chatId, "Главный агент");
                 }
         }
         QTimer::singleShot(0, this, &TgBot::poll);
@@ -512,28 +331,34 @@ void TgBot::sendTyping(qint64 chatId) {
     };
 
     requests->apiCall(this, host, path, body, {}, [](const QJsonObject &) {});
-}
-void TgBot::sendMessagesDelayed(qint64 chatId, const QList<DelayedMessage> &messages)
+}void TgBot::sendMessagesDelayed(qint64 chatId, const QList<DelayedMessage> &messages)
 {
-    if (messages.isEmpty())
-        return;
-
+    if (messages.isEmpty()) return;
 
     auto index = std::make_shared<int>(0);
     auto *timer = new QTimer(this);
-
     timer->setSingleShot(true);
 
-
     auto sendNext = [this, chatId, messages, index, timer]() mutable {
-
         if (*index >= messages.size()) {
             timer->deleteLater();
             return;
         }
 
         const DelayedMessage &msg = messages[*index];
-        sendMessage(chatId, msg.text);
+
+        if (!msg.stickerId.isEmpty()) {
+            qDebug() << "[TgBot] Отправляем стикер:" << msg.stickerId;
+            sendSticker(chatId, msg.stickerId);
+        }
+        else if (!msg.photoUrl.isEmpty()) {
+            qDebug() << "[TgBot] Отправляем фото:" << msg.photoUrl;
+            sendPhoto(chatId, msg.photoUrl,msg.text);
+        }
+        else if (!msg.text.isEmpty()) {
+            qDebug() << "[TgBot] Отправляем текст:" << msg.text;
+            sendMessage(chatId, msg.text);
+        }
 
         (*index)++;
 
@@ -542,10 +367,10 @@ void TgBot::sendMessagesDelayed(qint64 chatId, const QList<DelayedMessage> &mess
             return;
         }
 
-        timer->start(messages[*index].delay);
+        int nextDelayMs = messages[*index].delay > 0 ? messages[*index].delay * 1000 : 0;
+        timer->start(nextDelayMs);
     };
 
     connect(timer, &QTimer::timeout, this, sendNext);
-
     sendNext();
 }
