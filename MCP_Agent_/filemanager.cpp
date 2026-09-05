@@ -103,3 +103,34 @@ QString FileManager::getFile(const QString &fileToGet, QDir dirEngine){
     file.close();
     return content;
 }
+
+void FileManager::loadEnvFile(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "Не удалось открыть .env файл:" << file.errorString();
+        return;
+    }
+
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        QString line = in.readLine().trimmed();
+
+        if (line.isEmpty() || line.startsWith('#')) {
+            continue;
+        }
+
+        int separatorIdx = line.indexOf('=');
+        if (separatorIdx == -1) continue;
+
+        QString key = line.left(separatorIdx).trimmed();
+        QString value = line.mid(separatorIdx + 1).trimmed();
+
+        if ((value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith('\'') && value.endsWith('\''))) {
+            value = value.mid(1, value.length() - 2);
+        }
+
+        qputenv(key.toUtf8(), value.toUtf8());
+    }
+    file.close();
+}

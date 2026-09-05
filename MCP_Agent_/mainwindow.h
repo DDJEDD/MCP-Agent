@@ -273,7 +273,7 @@ public:
     void appendMainMessage(const QString &text, bool isUser);
     void appendSubagentMessage(const QString &id, const QString &text, bool isUser);
     void setAgentActive(bool active);
-
+    void refreshAgentsFromDisk();
     void setMainAgentName(const QString &name);
     void setMainAgentRole(const QString &role);
 
@@ -329,7 +329,7 @@ private:
     void openAppSettings();
     void showSettings();
     void showMainView();
-
+    AnimatedIconButton *refreshAgentsButton = nullptr;
     // ----- Chat rendering -----
     void appendHistory(const QString &agentId, const QString &text, bool isUser);
     void renderMessage(const ChatEntry &entry);

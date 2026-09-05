@@ -7,7 +7,11 @@
 #include <optional>
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
-    poll();
+    FileManager::loadEnvFile(".env");
+    geminiKey = qgetenv("GEMINI_API_KEY");
+    if (token.isEmpty()) {
+        qWarning() << "ВНИМАНИЕ: GEMINI_API_KEY не найден в .env файле!";
+    }
     phone = new phonenumber(this);
     m_agents = new agents(this);
     connect(m_agents, &agents::requestSendMessagesDelayed,
@@ -20,6 +24,8 @@ TgBot::TgBot(QObject *parent) : QObject(parent) {
             this, &TgBot::sendSticker);
     connect(m_agents, &agents::requestReqAgent,
             this, &TgBot::reqAgent);
+    poll();
+
 }
 void TgBot::checkreqPhoto(const QJsonObject &response, qint64 chatId, const QString &prompt) {
     if (response.contains("error")) {

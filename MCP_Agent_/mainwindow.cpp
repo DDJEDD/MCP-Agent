@@ -39,6 +39,7 @@
 #include <QMovie>
 #include <QStackedWidget>
 #include <QGridLayout>
+#include <QSet>
 #include <cmath>
 #include <utility>
 
@@ -1081,6 +1082,49 @@ void MainWindow::loadAgentsFromDisk()
     }
 }
 
+// ---------------------------------------------------------------------------
+// Обновление списка агентов вручную (кнопка ⟳ в шапке списка).
+// Синхронизирует карточки субагентов с фактическим содержимым Agents/ на
+// диске: добавляет новых, убирает удалённые снаружи, обновляет роли.
+// ---------------------------------------------------------------------------
+void MainWindow::refreshAgentsFromDisk()
+{
+    const QStringList existing = m_agentManager->listAgents();
+    const QSet<QString> onDisk(existing.begin(), existing.end());
+    const QString mainBackendName = m_agentFolderNames.value(QString(), m_mainAgentName);
+
+    // Добавляем новых агентов, которых ещё нет в списке карточек.
+    for (const QString &agentName : existing) {
+        if (agentName == mainBackendName)
+            continue;
+        if (m_agentFolderNames.values().contains(agentName))
+            continue;
+
+        const QString role = extractRoleFromMinInfo(m_agentManager->getFile(agentName, "min_info"));
+        const QString id = addSubagent(agentName, role);
+        m_agentFolderNames[id] = agentName;
+        m_agentEnabled.insert(id, true);
+    }
+
+    // Удаляем карточки агентов, чьи папки исчезли с диска.
+    const QStringList ids = m_cards.keys();
+    for (const QString &id : ids) {
+        const QString backendName = m_agentFolderNames.value(id);
+        if (!backendName.isEmpty() && !onDisk.contains(backendName))
+            removeSubagent(id);
+    }
+
+    // Подтягиваем актуальные роли для оставшихся карточек (на случай, если
+    // min_info был отредактирован вручную или другим агентом).
+    for (auto it = m_agentFolderNames.constBegin(); it != m_agentFolderNames.constEnd(); ++it) {
+        const QString &id = it.key();
+        const QString &backendName = it.value();
+        if (id.isEmpty() || backendName.isEmpty() || !m_cards.contains(id))
+            continue;
+        setSubagentRole(id, extractRoleFromMinInfo(m_agentManager->getFile(backendName, "min_info")));
+    }
+}
+
 void MainWindow::syncAgentName(const QString &backendName, const QString &newName)
 {
     if (backendName.isEmpty())
@@ -1527,6 +1571,12 @@ QWidget *MainWindow::buildSidebar()
                                           "color: %1; font-size: 10px; font-weight: bold; background-color: %2; border-radius: 9px;"
                                           ).arg(kTextSubtle, kBgCard));
 
+    refreshAgentsButton = new AnimatedIconButton("⟳", kTextMuted, kAccent, panel);
+    refreshAgentsButton->setFixedSize(22, 22);
+    refreshAgentsButton->setToolTip("Обновить список агентов");
+    refreshAgentsButton->setStyleSheet(iconButtonStyle(kAccent, "rgba(137, 180, 250, 0.15)"));
+    connect(refreshAgentsButton, &QPushButton::clicked, this, &MainWindow::refreshAgentsFromDisk);
+
     addSubagentButton = new QPushButton("+", panel);
     addSubagentButton->setFixedSize(22, 22);
     addSubagentButton->setCursor(Qt::PointingHandCursor);
@@ -1554,6 +1604,7 @@ QWidget *MainWindow::buildSidebar()
     headerRow->addWidget(subagentCountLabel);
     headerRow->addStretch();
     headerRow->addWidget(collapseListButton);
+    headerRow->addWidget(refreshAgentsButton);
     headerRow->addWidget(addSubagentButton);
     layout->addLayout(headerRow);
 
@@ -2105,9 +2156,9 @@ MainWindow::AgentSettingsResult MainWindow::runAgentSettingsDialog(const QString
     auto *promptTabs = new QTabWidget(&dialog);
 
     static const QList<QPair<QString, QString>> promptParts = {
-        {"soul", "Soul"},
-        {"system_prompt", "System Prompt"},
-    };
+                                                               {"soul", "Soul"},
+                                                               {"system_prompt", "System Prompt"},
+                                                               };
 
     QMap<QString, QTextEdit *> promptEdits;
     for (const auto &part : promptParts) {

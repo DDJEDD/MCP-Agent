@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 18.0.2, 2026-09-02T20:46:40. -->
+<!-- Written by QtCreator 18.0.2, 2026-09-05T09:56:59. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -136,7 +136,7 @@
     <valuelist type="QVariantList" key="ProjectExplorer.BuildConfiguration.CustomParsers"/>
     <value type="bool" key="ProjectExplorer.BuildConfiguration.ParseStandardOutput">false</value>
     <valuelist type="QVariantList" key="ProjectExplorer.BuildConfiguration.UserEnvironmentChanges">
-     <value type="QString">GEMINI_API_KEY=AQ.Ab8RN6IV_9WEgI7ECN8_-HO0QqiMShc0kF5BW_YqmqqYdPrqdg</value>
+     <value type="QString">GEMINI_API_KEY=AQ.Ab8RN6JKKNtV7HJZT8PsN-mvjczb9qT390y_lkF5tw5dFqNxHg</value>
      <value type="QString">AI_TEXT_PATH=/v1beta/models/gemini-3.6-flash:generateContent?key=%1</value>
     </valuelist>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Отладка</value>

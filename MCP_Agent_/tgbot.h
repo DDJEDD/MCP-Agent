@@ -19,7 +19,7 @@ class TgBot : public QObject
     phonenumber *phone;
     agents *m_agents;
     QString token = "8979215541:AAGMuBOHM81rE3y8R-iK7wsFuAGfTy4ckXI";
-    QString geminiKey ="AQ.Ab8RN6IV_9WEgI7ECN8_-HO0QqiMShc0kF5BW_YqmqqYdPrqdg";
+    QString geminiKey;
 
     QString host  = "api.telegram.org";
     qint64 offset = 0;
