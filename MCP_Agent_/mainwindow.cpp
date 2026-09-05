@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "tokenstats.h"
 
 #include <QLabel>
 #include <QLineEdit>
@@ -1334,6 +1335,21 @@ QWidget *MainWindow::buildSettingsPage()
     connect(apiBtn, &QPushButton::clicked, this, &MainWindow::openAppSettings);
     outer->addWidget(apiBtn, 0, Qt::AlignLeft);
 
+    addEyebrow("ТОКЕНЫ И ROI");
+    tokenStatsLabel = new QLabel(content);
+    tokenStatsLabel->setWordWrap(true);
+    tokenStatsLabel->setTextFormat(Qt::PlainText);
+    tokenStatsLabel->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMuted));
+    outer->addWidget(tokenStatsLabel);
+    refreshTokenStatsLabel();
+    connect(TokenStats::instance(), &TokenStats::updated, this, &MainWindow::refreshTokenStatsLabel, Qt::UniqueConnection);
+
+    auto *resetStatsBtn = new QPushButton("Сбросить статистику токенов", content);
+    resetStatsBtn->setCursor(Qt::PointingHandCursor);
+    resetStatsBtn->setStyleSheet(pillButtonStyle(false));
+    connect(resetStatsBtn, &QPushButton::clicked, this, []() { TokenStats::instance()->reset(); });
+    outer->addWidget(resetStatsBtn, 0, Qt::AlignLeft);
+
     outer->addStretch(1);
     scroll->setWidget(content);
 
@@ -2484,6 +2500,12 @@ void MainWindow::handleSendClicked()
 void MainWindow::receiveAgentReply(const QString &agentId, const QString &text)
 {
     appendHistory(agentId, text, false);
+}
+
+void MainWindow::refreshTokenStatsLabel()
+{
+    if (tokenStatsLabel)
+        tokenStatsLabel->setText(TokenStats::instance()->formatSummary());
 }
 
 void MainWindow::updateUptime()

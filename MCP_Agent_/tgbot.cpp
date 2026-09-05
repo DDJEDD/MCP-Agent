@@ -1,10 +1,16 @@
 #include "tgbot.h"
 #include "filemanager.h"
+#include "tokenstats.h"
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
 #include <QTimer>
 #include <optional>
+
+// How many of the most recent user/AI exchanges get sent to Gemini as
+// history. Without this cap GetOldMessages() would keep resending the
+// entire conversation on every single message, growing without bound.
+static constexpr int kHistoryExchangeLimit = 12;
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
     FileManager::loadEnvFile(".env");
@@ -170,7 +176,10 @@ void TgBot::reqAgent(const QString &userText, qint64 chatId,const QString &agent
     QStringList agentNames = m_agents->listAgents();
     QString agentsListStr = "Доступные субагенты в системе: " + agentNames.join(", ");
 
-    QString final = m_agents->getFullPrompt(agentName) + "\nHISTORY:"  + "\n\n[СИСТЕМНАЯ СПРАВКА]\n" + agentsListStr + FileManager::GetOldMessages(chatId);
+    const QString fullHistory = FileManager::GetOldMessages(chatId);
+    const QString trimmedHistory = FileManager::GetOldMessages(chatId, kHistoryExchangeLimit);
+
+    QString final = m_agents->getFullPrompt(agentName) + "\nHISTORY:"  + "\n\n[СИСТЕМНАЯ СПРАВКА]\n" + agentsListStr + trimmedHistory;
     textwithoutnum finaluserText = phone->HideNumbers(userText);
     QString fullContextText = final + "\n" + finaluserText.usertext;
 
@@ -205,7 +214,15 @@ void TgBot::reqAgent(const QString &userText, qint64 chatId,const QString &agent
 
 
     QMap<QString, QString> nums = finaluserText.numbers;
-    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText,nums](const QJsonObject &response) {
+    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText, nums, fullHistory, trimmedHistory](const QJsonObject &response) {
+        const QJsonObject usage = response.value("usageMetadata").toObject();
+        if (!usage.isEmpty()) {
+            const qint64 promptTokens = usage.value("promptTokenCount").toVariant().toLongLong();
+            const qint64 completionTokens = usage.value("candidatesTokenCount").toVariant().toLongLong();
+            const qint64 baselineEst = TokenStats::estimateTokens(fullHistory);
+            const qint64 trimmedEst = TokenStats::estimateTokens(trimmedHistory);
+            TokenStats::instance()->recordCall(promptTokens, completionTokens, baselineEst, trimmedEst);
+        }
         checkreq(response, chatId, userText, nums);
     });
 }
@@ -250,6 +267,8 @@ void TgBot::poll() {
                     reqPhotoAI(promptText, chatId);
                 } else if (text == "/start") {
                     sendMessage(chatId, "На связи Олег Сигмов, senior AI-ассистент по разработке, DevOps и системной инженерии из Sigmov LTD. А ещё у нас на вооружении появилась новая фича — команда /generate. Напиши её, опиши задачу, и я сгенерирую тебе сочный арт, техническую схему или архитектурный концепт.");
+                } else if (text == "/stats") {
+                    sendMessage(chatId, TokenStats::instance()->formatSummary());
                 } else {
 
                     reqAgent(text, chatId, "Главный агент");

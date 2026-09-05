@@ -353,6 +353,7 @@ private:
 private slots:
     void handleSendClicked();
     void updateUptime();
+    void refreshTokenStatsLabel();
 
 private:
     Ui::MainWindow *ui;
@@ -403,6 +404,8 @@ private:
 
     QPlainTextEdit *messageInput = nullptr;
     QPushButton *sendButton = nullptr;
+
+    QLabel *tokenStatsLabel = nullptr;
 };
 
 #endif // MAINWINDOW_H

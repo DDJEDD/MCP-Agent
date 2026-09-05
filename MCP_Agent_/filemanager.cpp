@@ -69,24 +69,36 @@ void FileManager::SaveMessage(qint64 userid, const QString &userprompt,  const Q
 }
 
 QString FileManager::GetOldMessages(qint64 userid){
+    return GetOldMessages(userid, -1);
+}
+
+QString FileManager::GetOldMessages(qint64 userid, int maxExchanges){
     QFile userfile(QString::number(userid) +".jsonl");
     if (!userfile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Could not open file for reading:" << userfile.errorString();
         return "";
     }
     QTextStream in(&userfile);
-    QString prompt;
+    QStringList lines;
     while (!in.atEnd()) {
         QString line = in.readLine().trimmed();
+        if (!line.isEmpty())
+            lines.append(line);
+    }
+    userfile.close();
+
+    if (maxExchanges >= 0 && lines.size() > maxExchanges)
+        lines = lines.mid(lines.size() - maxExchanges);
+
+    QString prompt;
+    for (const QString &line : lines) {
         QJsonDocument doc = QJsonDocument::fromJson(line.toUtf8());
         if (doc.isObject()) {
             QJsonObject logObj = doc.object();
             prompt.append("User: " + logObj["user_prompt"].toString() + "\n");
             prompt.append("AI: " + logObj["ai_resp"].toString() + "\n\n");
-
         }
     }
-    userfile.close();
     return prompt;
 }
 QString FileManager::getFile(const QString &fileToGet, QDir dirEngine){

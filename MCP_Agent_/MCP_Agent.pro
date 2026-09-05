@@ -16,7 +16,8 @@ SOURCES += \
     mainwindow.cpp \
     phonenumber.cpp \
     requests.cpp \
-    tgbot.cpp
+    tgbot.cpp \
+    tokenstats.cpp
 
 HEADERS += \
     agents.h \
@@ -25,7 +26,8 @@ HEADERS += \
     mainwindow.h \
     phonenumber.h \
     requests.h \
-    tgbot.h
+    tgbot.h \
+    tokenstats.h
 
 FORMS += \
     mainwindow.ui
