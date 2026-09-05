@@ -1,16 +1,50 @@
 #include "tgbot.h"
 #include "filemanager.h"
 #include "tokenstats.h"
+#include "calllog.h"
 #include <QDebug>
 #include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
 #include <QTimer>
+#include <QElapsedTimer>
+#include <QDateTime>
 #include <optional>
 
 // How many of the most recent user/AI exchanges get sent to Gemini as
 // history. Without this cap GetOldMessages() would keep resending the
 // entire conversation on every single message, growing without bound.
 static constexpr int kHistoryExchangeLimit = 12;
+
+// Recursively truncates long string values (e.g. base64 image data) before a
+// JSON response is stored in CallLog, so the journal UI stays readable.
+static QJsonValue redactLongStrings(const QJsonValue &value, int maxLen = 800)
+{
+    if (value.isString()) {
+        const QString s = value.toString();
+        if (s.length() > maxLen)
+            return QString("%1… [обрезано, всего %2 символов]").arg(s.left(maxLen)).arg(s.length());
+        return s;
+    }
+    if (value.isArray()) {
+        QJsonArray out;
+        for (const auto &v : value.toArray())
+            out.append(redactLongStrings(v, maxLen));
+        return out;
+    }
+    if (value.isObject()) {
+        QJsonObject out;
+        const QJsonObject obj = value.toObject();
+        for (auto it = obj.begin(); it != obj.end(); ++it)
+            out[it.key()] = redactLongStrings(it.value(), maxLen);
+        return out;
+    }
+    return value;
+}
+
+static QString formatResponseForLog(const QJsonObject &response)
+{
+    return QString::fromUtf8(QJsonDocument(redactLongStrings(response).toObject()).toJson(QJsonDocument::Indented));
+}
 
 TgBot::TgBot(QObject *parent) : QObject(parent) {
     FileManager::loadEnvFile(".env");
@@ -114,7 +148,27 @@ void TgBot::reqPhotoAI(const QString &userText, qint64 chatId) {
     generationConfig["responseModalities"] = QJsonArray{"IMAGE"};
     body["generationConfig"] = generationConfig;
 
-    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText](const QJsonObject &response) {
+    QElapsedTimer callTimer;
+    callTimer.start();
+    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText, callTimer](const QJsonObject &response) {
+        const bool hasError = response.contains("error");
+        const bool hasImage = !response.value("candidates").toArray().isEmpty();
+
+        CallLog::Entry logEntry;
+        logEntry.timestamp = QDateTime::currentDateTime();
+        logEntry.chatId = chatId;
+        logEntry.kind = "Изображение";
+        logEntry.agentName = "Генератор изображений";
+        logEntry.userText = userText;
+        logEntry.aiText = hasError
+            ? response.value("error").toObject().value("message").toString()
+            : (hasImage ? "Изображение сгенерировано" : "Ответ без изображения");
+        logEntry.fullPrompt = userText;
+        logEntry.rawResponse = formatResponseForLog(response);
+        logEntry.durationMs = callTimer.elapsed();
+        logEntry.success = !hasError && hasImage;
+        CallLog::instance()->record(logEntry);
+
         checkreqPhoto(response, chatId, userText);
     });
 }
@@ -214,15 +268,50 @@ void TgBot::reqAgent(const QString &userText, qint64 chatId,const QString &agent
 
 
     QMap<QString, QString> nums = finaluserText.numbers;
-    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText, nums, fullHistory, trimmedHistory](const QJsonObject &response) {
+    QElapsedTimer callTimer;
+    callTimer.start();
+    requests->apiCall(this, aiHost, aiPath, body, {}, [this, chatId, userText, nums, fullHistory, trimmedHistory, fullContextText, agentName, callTimer](const QJsonObject &response) {
         const QJsonObject usage = response.value("usageMetadata").toObject();
+        const qint64 promptTokens = usage.value("promptTokenCount").toVariant().toLongLong();
+        const qint64 completionTokens = usage.value("candidatesTokenCount").toVariant().toLongLong();
+        const qint64 baselineEst = TokenStats::estimateTokens(fullHistory);
+        const qint64 trimmedEst = TokenStats::estimateTokens(trimmedHistory);
         if (!usage.isEmpty()) {
-            const qint64 promptTokens = usage.value("promptTokenCount").toVariant().toLongLong();
-            const qint64 completionTokens = usage.value("candidatesTokenCount").toVariant().toLongLong();
-            const qint64 baselineEst = TokenStats::estimateTokens(fullHistory);
-            const qint64 trimmedEst = TokenStats::estimateTokens(trimmedHistory);
             TokenStats::instance()->recordCall(promptTokens, completionTokens, baselineEst, trimmedEst);
         }
+
+        QString aiText;
+        bool success = !response.contains("error");
+        if (!success) {
+            aiText = response.value("error").toObject().value("message").toString();
+        } else {
+            const QJsonArray candidates = response.value("candidates").toArray();
+            if (!candidates.isEmpty()) {
+                const QJsonArray parts = candidates.first().toObject().value("content").toObject().value("parts").toArray();
+                if (!parts.isEmpty())
+                    aiText = parts.first().toObject().value("text").toString();
+            }
+            if (aiText.isEmpty())
+                success = false;
+        }
+
+        CallLog::Entry logEntry;
+        logEntry.timestamp = QDateTime::currentDateTime();
+        logEntry.chatId = chatId;
+        logEntry.kind = "Диалог";
+        logEntry.agentName = agentName;
+        logEntry.userText = userText;
+        logEntry.aiText = aiText;
+        logEntry.fullPrompt = fullContextText;
+        logEntry.rawResponse = formatResponseForLog(response);
+        logEntry.promptTokens = promptTokens;
+        logEntry.completionTokens = completionTokens;
+        logEntry.durationMs = callTimer.elapsed();
+        logEntry.success = success;
+        logEntry.baselineHistoryTokensEst = baselineEst;
+        logEntry.trimmedHistoryTokensEst = trimmedEst;
+        CallLog::instance()->record(logEntry);
+
         checkreq(response, chatId, userText, nums);
     });
 }

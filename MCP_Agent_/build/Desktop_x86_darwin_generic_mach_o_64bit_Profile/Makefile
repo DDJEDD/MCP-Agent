@@ -53,6 +53,7 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = ../../agents.cpp \
+		../../calllog.cpp \
 		../../filemanager.cpp \
 		../../jsonparser.cpp \
 		../../main.cpp \
@@ -61,10 +62,12 @@ SOURCES       = ../../agents.cpp \
 		../../requests.cpp \
 		../../tgbot.cpp \
 		../../tokenstats.cpp moc_agents.cpp \
+		moc_calllog.cpp \
 		moc_mainwindow.cpp \
 		moc_tgbot.cpp \
 		moc_tokenstats.cpp
 OBJECTS       = agents.o \
+		calllog.o \
 		filemanager.o \
 		jsonparser.o \
 		main.o \
@@ -74,6 +77,7 @@ OBJECTS       = agents.o \
 		tgbot.o \
 		tokenstats.o \
 		moc_agents.o \
+		moc_calllog.o \
 		moc_mainwindow.o \
 		moc_tgbot.o \
 		moc_tokenstats.o
@@ -422,6 +426,7 @@ DIST          = ../../prompt.md \
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		../../.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -455,6 +460,7 @@ DIST          = ../../prompt.md \
 		/opt/homebrew/share/qt/mkspecs/features/yacc.prf \
 		/opt/homebrew/share/qt/mkspecs/features/lex.prf \
 		../../../../MCP_Agent.pro ../../agents.h \
+		../../calllog.h \
 		../../filemanager.h \
 		../../jsonparser.h \
 		../../mainwindow.h \
@@ -462,6 +468,7 @@ DIST          = ../../prompt.md \
 		../../requests.h \
 		../../tgbot.h \
 		../../tokenstats.h ../../agents.cpp \
+		../../calllog.cpp \
 		../../filemanager.cpp \
 		../../jsonparser.cpp \
 		../../main.cpp \
@@ -478,7 +485,7 @@ TARGET        = MCP_Agent.app/Contents/MacOS/MCP_Agent
 EXPORT_QMAKE_MAC_SDK = macosx
 EXPORT_QMAKE_MAC_SDK_VERSION = 26.5
 EXPORT_QMAKE_XCODE_DEVELOPER_PATH = /Library/Developer/CommandLineTools
-EXPORT__QMAKE_STASH_ = 
+EXPORT__QMAKE_STASH_ = /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/.qmake.stash
 EXPORT_VALID_ARCHS = arm64
 EXPORT_DEFAULT_ARCHS = arm64
 EXPORT_ARCHS = $(filter $(EXPORT_VALID_ARCHS), $(if $(ARCHS), $(ARCHS), $(if $(EXPORT_DEFAULT_ARCHS), $(EXPORT_DEFAULT_ARCHS), $(EXPORT_VALID_ARCHS))))
@@ -839,6 +846,7 @@ Makefile: ../../MCP_Agent.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.co
 		/opt/homebrew/share/qt/mkspecs/features/qt_config.prf \
 		/opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf \
 		/opt/homebrew/share/qt/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf \
 		/opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf \
 		/opt/homebrew/share/qt/mkspecs/features/toolchain.prf \
@@ -1222,6 +1230,7 @@ Makefile: ../../MCP_Agent.pro /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.co
 /opt/homebrew/share/qt/mkspecs/features/qt_config.prf:
 /opt/homebrew/share/qt/mkspecs/macx-clang/qmake.conf:
 /opt/homebrew/share/qt/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /opt/homebrew/share/qt/mkspecs/features/exclusive_builds.prf:
 /opt/homebrew/share/qt/mkspecs/features/mac/sdk.prf:
 /opt/homebrew/share/qt/mkspecs/features/toolchain.prf:
@@ -1285,8 +1294,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../../agents.h ../../filemanager.h ../../jsonparser.h ../../mainwindow.h ../../phonenumber.h ../../requests.h ../../tgbot.h ../../tokenstats.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../agents.cpp ../../filemanager.cpp ../../jsonparser.cpp ../../main.cpp ../../mainwindow.cpp ../../phonenumber.cpp ../../requests.cpp ../../tgbot.cpp ../../tokenstats.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../agents.h ../../calllog.h ../../filemanager.h ../../jsonparser.h ../../mainwindow.h ../../phonenumber.h ../../requests.h ../../tgbot.h ../../tokenstats.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../../agents.cpp ../../calllog.cpp ../../filemanager.cpp ../../jsonparser.cpp ../../main.cpp ../../mainwindow.cpp ../../phonenumber.cpp ../../requests.cpp ../../tgbot.cpp ../../tokenstats.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../../mainwindow.ui $(DISTDIR)/
 
 
@@ -1297,7 +1306,7 @@ clean: compiler_clean
 
 distclean: clean 
 	-$(DEL_FILE) -r MCP_Agent.app
-	-$(DEL_FILE) /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist
+	-$(DEL_FILE) /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Resources/DWARF/MCP_Agent .qmake.stash /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/MCP_Agent.app.dSYM/Contents/Info.plist
 	-$(DEL_FILE) Makefile
 
 
@@ -1322,9 +1331,9 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 	/Library/Developer/CommandLineTools/usr/bin/clang++ -pipe -stdlib=libc++ -O2 -g -std=gnu++1z $(EXPORT_ARCH_ARGS) -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mmacosx-version-min=14.0 -Wall -Wextra -dM -E -o moc_predefs.h /opt/homebrew/share/qt/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_agents.cpp moc_mainwindow.cpp moc_tgbot.cpp moc_tokenstats.cpp
+compiler_moc_header_make_all: moc_agents.cpp moc_calllog.cpp moc_mainwindow.cpp moc_tgbot.cpp moc_tokenstats.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_agents.cpp moc_mainwindow.cpp moc_tgbot.cpp moc_tokenstats.cpp
+	-$(DEL_FILE) moc_agents.cpp moc_calllog.cpp moc_mainwindow.cpp moc_tgbot.cpp moc_tokenstats.cpp
 moc_agents.cpp: ../../agents.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QString \
 		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
@@ -1336,6 +1345,15 @@ moc_agents.cpp: ../../agents.h \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../agents.h -o moc_agents.cpp
+
+moc_calllog.cpp: ../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList \
+		moc_predefs.h \
+		/opt/homebrew/share/qt/libexec/moc
+	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../calllog.h -o moc_calllog.cpp
 
 moc_mainwindow.cpp: ../../mainwindow.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QMainWindow \
@@ -1353,6 +1371,8 @@ moc_mainwindow.cpp: ../../mainwindow.h \
 		../../jsonparser.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		../../phonenumber.h \
+		../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
 		moc_predefs.h \
 		/opt/homebrew/share/qt/libexec/moc
 	/opt/homebrew/share/qt/libexec/moc $(DEFINES) --include /Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_/build/Desktop_x86_darwin_generic_mach_o_64bit_Profile/moc_predefs.h -I/opt/homebrew/share/qt/mkspecs/macx-clang -I/Users/worker/Documents/GitHub/MCP-Agent/MCP_Agent_ -I/opt/homebrew/lib/QtWidgets.framework/Headers -I/opt/homebrew/lib/QtGui.framework/Headers -I/opt/homebrew/lib/QtNetwork.framework/Headers -I/opt/homebrew/lib/QtCore.framework/Headers -I. -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/Library/Developer/CommandLineTools/usr/lib/clang/21/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -I/Library/Developer/CommandLineTools/usr/include -F/opt/homebrew/lib ../../mainwindow.h -o moc_mainwindow.cpp
@@ -1423,6 +1443,13 @@ agents.o: ../../agents.cpp ../../agents.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDebug
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o agents.o ../../agents.cpp
 
+calllog.o: ../../calllog.cpp ../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
+		/opt/homebrew/lib/QtCore.framework/Headers/QString \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
+		/opt/homebrew/lib/QtCore.framework/Headers/QList
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o calllog.o ../../calllog.cpp
+
 filemanager.o: ../../filemanager.cpp ../../filemanager.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QObject \
 		/opt/homebrew/lib/QtCore.framework/Headers/QFile \
@@ -1460,6 +1487,8 @@ main.o: ../../main.cpp ../../mainwindow.h \
 		../../jsonparser.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		../../phonenumber.h \
+		../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
 		../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QCoreApplication \
 		/opt/homebrew/lib/QtNetwork.framework/Headers/QSslSocket \
@@ -1486,12 +1515,13 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../jsonparser.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QJsonObject \
 		../../phonenumber.h \
+		../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
 		ui_mainwindow.h \
 		../../tokenstats.h \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QLineEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QVBoxLayout \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QHBoxLayout \
-		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QTextEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QPlainTextEdit \
 		/opt/homebrew/lib/QtWidgets.framework/Headers/QScrollArea \
@@ -1562,9 +1592,12 @@ tgbot.o: ../../tgbot.cpp ../../tgbot.h \
 		/opt/homebrew/lib/QtCore.framework/Headers/QTextStream \
 		/opt/homebrew/lib/QtCore.framework/Headers/QDir \
 		../../tokenstats.h \
+		../../calllog.h \
+		/opt/homebrew/lib/QtCore.framework/Headers/QDateTime \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpression \
 		/opt/homebrew/lib/QtCore.framework/Headers/QRegularExpressionMatchIterator \
-		/opt/homebrew/lib/QtCore.framework/Headers/QTimer
+		/opt/homebrew/lib/QtCore.framework/Headers/QTimer \
+		/opt/homebrew/lib/QtCore.framework/Headers/QElapsedTimer
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tgbot.o ../../tgbot.cpp
 
 tokenstats.o: ../../tokenstats.cpp ../../tokenstats.h \
@@ -1575,6 +1608,9 @@ tokenstats.o: ../../tokenstats.cpp ../../tokenstats.h \
 
 moc_agents.o: moc_agents.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_agents.o moc_agents.cpp
+
+moc_calllog.o: moc_calllog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_calllog.o moc_calllog.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp

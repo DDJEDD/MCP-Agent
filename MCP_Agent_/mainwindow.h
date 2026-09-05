@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include "agents.h"
+#include "calllog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -320,6 +321,8 @@ private:
     QWidget *buildSidebar();
     QWidget *buildChatArea();
     QWidget *buildSettingsPage();
+    QWidget *buildAnalyticsPage();
+    QWidget *buildLogEntryCard(const CallLog::Entry &entry);
     SubagentCard *createCardWidget(const QString &id, const QString &name);
     void applyCollapsedVisualState();
     void toggleAgentListCollapsed();
@@ -329,6 +332,7 @@ private:
     void openAppSettings();
     void showSettings();
     void showMainView();
+    void showAnalytics();
     AnimatedIconButton *refreshAgentsButton = nullptr;
     // ----- Chat rendering -----
     void appendHistory(const QString &agentId, const QString &text, bool isUser);
@@ -353,7 +357,8 @@ private:
 private slots:
     void handleSendClicked();
     void updateUptime();
-    void refreshTokenStatsLabel();
+    void refreshTokenStatsCards();
+    void addLogEntryToUi(const CallLog::Entry &entry);
 
 private:
     Ui::MainWindow *ui;
@@ -405,7 +410,15 @@ private:
     QPlainTextEdit *messageInput = nullptr;
     QPushButton *sendButton = nullptr;
 
-    QLabel *tokenStatsLabel = nullptr;
+    AnimatedIconButton *analyticsEntryButton = nullptr;
+    QLabel *statTotalTokensValue = nullptr;
+    QLabel *statCostValue = nullptr;
+    QLabel *statCallCountValue = nullptr;
+    QLabel *statSavedTokensValue = nullptr;
+    QLabel *statSavedCostValue = nullptr;
+    QWidget *logListHost = nullptr;
+    QVBoxLayout *logListLayout = nullptr;
+    QLabel *logEmptyLabel = nullptr;
 };
 
 #endif // MAINWINDOW_H

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "tokenstats.h"
+#include "calllog.h"
 
 #include <QLabel>
 #include <QLineEdit>
@@ -1217,14 +1218,14 @@ QWidget *MainWindow::buildSettingsPage()
         familyBtn->setCursor(Qt::PointingHandCursor);
         familyBtn->setStyleSheet(pillButtonStyle(familyActive));
 
-        auto *sunLabel = new QLabel("☀", content);
+        auto *sunLabel = new QLabel("Светлая", content);
         sunLabel->setStyleSheet(smallLabelStyle());
 
         auto *modeToggle = new ToggleSwitch(content);
         modeToggle->setToolTip("Светлая / тёмная версия темы");
         if (isLight) modeToggle->setChecked(false, false);
 
-        auto *moonLabel = new QLabel("🌙", content);
+        auto *moonLabel = new QLabel("Тёмная", content);
         moonLabel->setStyleSheet(smallLabelStyle());
 
         connect(familyBtn, &QPushButton::clicked, this, [this, family, modeToggle]() {
@@ -1335,21 +1336,6 @@ QWidget *MainWindow::buildSettingsPage()
     connect(apiBtn, &QPushButton::clicked, this, &MainWindow::openAppSettings);
     outer->addWidget(apiBtn, 0, Qt::AlignLeft);
 
-    addEyebrow("ТОКЕНЫ И ROI");
-    tokenStatsLabel = new QLabel(content);
-    tokenStatsLabel->setWordWrap(true);
-    tokenStatsLabel->setTextFormat(Qt::PlainText);
-    tokenStatsLabel->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMuted));
-    outer->addWidget(tokenStatsLabel);
-    refreshTokenStatsLabel();
-    connect(TokenStats::instance(), &TokenStats::updated, this, &MainWindow::refreshTokenStatsLabel, Qt::UniqueConnection);
-
-    auto *resetStatsBtn = new QPushButton("Сбросить статистику токенов", content);
-    resetStatsBtn->setCursor(Qt::PointingHandCursor);
-    resetStatsBtn->setStyleSheet(pillButtonStyle(false));
-    connect(resetStatsBtn, &QPushButton::clicked, this, []() { TokenStats::instance()->reset(); });
-    outer->addWidget(resetStatsBtn, 0, Qt::AlignLeft);
-
     outer->addStretch(1);
     scroll->setWidget(content);
 
@@ -1358,6 +1344,293 @@ QWidget *MainWindow::buildSettingsPage()
     pageLayout->addWidget(scroll);
 
     return page;
+}
+
+QWidget *MainWindow::buildAnalyticsPage()
+{
+    auto *page = new QWidget(this);
+    page->setStyleSheet(QString("background-color: %1;").arg(kBgWindow));
+
+    auto *scroll = new QScrollArea(page);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setStyleSheet(QString(
+                              "QScrollArea { background: transparent; border: none; }"
+                              "QScrollBar:vertical { background: transparent; width: 8px; margin: 0px; }"
+                              "QScrollBar::handle:vertical { background: %1; border-radius: 4px; min-height: 24px; }"
+                              "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }"
+                              ).arg(kBorder));
+
+    auto *content = new QWidget(scroll);
+    content->setStyleSheet("background: transparent;");
+    auto *outer = new QVBoxLayout(content);
+    outer->setContentsMargins(36, 30, 36, 30);
+    outer->setSpacing(14);
+
+    auto *backRow = new QHBoxLayout();
+    auto *backButton = new QPushButton("← Назад к чату", content);
+    backButton->setCursor(Qt::PointingHandCursor);
+    backButton->setStyleSheet(QString(
+                                  "QPushButton { background: transparent; color: %1; border: none; font-size: 13px; font-weight: 600; padding: 4px 0px; }"
+                                  "QPushButton:hover { color: %2; }"
+                                  ).arg(kTextSubtle, kAccent));
+    connect(backButton, &QPushButton::clicked, this, &MainWindow::showMainView);
+    backRow->addWidget(backButton);
+    backRow->addStretch(1);
+    outer->addLayout(backRow);
+
+    auto *pageTitle = new QLabel("Аналитика и журнал", content);
+    pageTitle->setStyleSheet(QString("color: %1; font-size: 20px; font-weight: 700; border: none; background: transparent;").arg(kTextMain));
+    outer->addWidget(pageTitle);
+
+    auto *pageSubtitle = new QLabel(
+        "Сколько токенов реально потратил ИИ, сколько сэкономила обрезка истории диалога, "
+        "и подробный журнал каждого обращения — что было отправлено и что пришло в ответ.",
+        content);
+    pageSubtitle->setWordWrap(true);
+    pageSubtitle->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMuted));
+    outer->addWidget(pageSubtitle);
+
+    // ---------------- Stat cards ----------------
+    auto *statsCardsRow = new QHBoxLayout();
+    statsCardsRow->setSpacing(12);
+
+    auto buildStatCard = [&](const QString &title, const QString &accentColor) -> QLabel* {
+        auto *card = new QFrame(content);
+        card->setStyleSheet(QString(
+                                 "QFrame { background-color: %1; border: 1px solid %2; border-radius: 14px; }"
+                                 ).arg(kBgCard, kBorder));
+        auto *cardLayout = new QVBoxLayout(card);
+        cardLayout->setContentsMargins(16, 14, 16, 14);
+        cardLayout->setSpacing(6);
+
+        auto *titleLabel = new QLabel(title, card);
+        titleLabel->setWordWrap(true);
+        titleLabel->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: 700; border: none; background: transparent;").arg(kTextMuted));
+        cardLayout->addWidget(titleLabel);
+
+        auto *valueLabel = new QLabel("—", card);
+        valueLabel->setStyleSheet(QString("color: %1; font-size: 20px; font-weight: 700; border: none; background: transparent;").arg(accentColor));
+        cardLayout->addWidget(valueLabel);
+
+        applyElevation(card, 18, 4, 40);
+        statsCardsRow->addWidget(card, 1);
+        return valueLabel;
+    };
+
+    statTotalTokensValue = buildStatCard("ТОКЕНОВ ПОТРАЧЕНО", kTextMain);
+    statCostValue = buildStatCard("ПРИМЕРНАЯ СТОИМОСТЬ", kTextMain);
+    statCallCountValue = buildStatCard("ЗАПРОСОВ К ИИ", kTextMain);
+    statSavedTokensValue = buildStatCard("СЭКОНОМЛЕНО ТОКЕНОВ", kAccentGreen);
+    statSavedCostValue = buildStatCard("ЭКОНОМИЯ ОТ ОПТИМИЗАЦИИ", kAccentGreen);
+
+    outer->addLayout(statsCardsRow);
+    refreshTokenStatsCards();
+    connect(TokenStats::instance(), &TokenStats::updated, this, &MainWindow::refreshTokenStatsCards, Qt::UniqueConnection);
+
+    auto pillButtonStyleLocal = [](const QString &color, const QString &border) {
+        return QString(
+                   "QPushButton {"
+                   "   background-color: transparent;"
+                   "   color: %1;"
+                   "   border: 1px solid %2;"
+                   "   border-radius: 10px;"
+                   "   padding: 8px 16px;"
+                   "   font-size: 12px;"
+                   "   font-weight: 600;"
+                   "}"
+                   "QPushButton:hover { border-color: %1; }"
+                   ).arg(color, border);
+    };
+
+    auto *resetRow = new QHBoxLayout();
+    auto *resetStatsBtn = new QPushButton("Сбросить статистику токенов", content);
+    resetStatsBtn->setCursor(Qt::PointingHandCursor);
+    resetStatsBtn->setStyleSheet(pillButtonStyleLocal(kTextMuted, kBorder));
+    connect(resetStatsBtn, &QPushButton::clicked, this, []() { TokenStats::instance()->reset(); });
+    resetRow->addWidget(resetStatsBtn, 0, Qt::AlignLeft);
+    resetRow->addStretch(1);
+    outer->addLayout(resetRow);
+
+    auto *sep = new QFrame(content);
+    sep->setFrameShape(QFrame::HLine);
+    sep->setStyleSheet(QString("background-color: %1; border: none; max-height: 1px; margin-top: 6px; margin-bottom: 2px;").arg(kBorder));
+    outer->addWidget(sep);
+
+    // ---------------- Communication log ----------------
+    auto *logTitle = new QLabel("Журнал общения", content);
+    logTitle->setStyleSheet(QString("color: %1; font-size: 15px; font-weight: 700; border: none; background: transparent;").arg(kTextMain));
+    outer->addWidget(logTitle);
+
+    auto *logSubtitle = new QLabel("Нажмите на запись, чтобы посмотреть полный текст запроса и ответа.", content);
+    logSubtitle->setStyleSheet(QString("color: %1; font-size: 11px; border: none; background: transparent;").arg(kTextMuted));
+    outer->addWidget(logSubtitle);
+
+    logListHost = new QWidget(content);
+    logListLayout = new QVBoxLayout(logListHost);
+    logListLayout->setContentsMargins(0, 6, 0, 0);
+    logListLayout->setSpacing(10);
+
+    const QList<CallLog::Entry> entries = CallLog::instance()->entries();
+    if (entries.isEmpty()) {
+        logEmptyLabel = new QLabel(
+            "Пока нет ни одного обращения к ИИ. Как только бот ответит на сообщение в Telegram, здесь появится запись.",
+            logListHost);
+        logEmptyLabel->setWordWrap(true);
+        logEmptyLabel->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMuted));
+        logListLayout->addWidget(logEmptyLabel);
+    } else {
+        logEmptyLabel = nullptr;
+        for (auto it = entries.crbegin(); it != entries.crend(); ++it)
+            logListLayout->addWidget(buildLogEntryCard(*it));
+    }
+
+    connect(CallLog::instance(), &CallLog::entryAdded, this, &MainWindow::addLogEntryToUi, Qt::UniqueConnection);
+
+    outer->addWidget(logListHost);
+    outer->addStretch(1);
+    scroll->setWidget(content);
+
+    auto *pageLayout = new QVBoxLayout(page);
+    pageLayout->setContentsMargins(0, 0, 0, 0);
+    pageLayout->addWidget(scroll);
+
+    return page;
+}
+
+QWidget *MainWindow::buildLogEntryCard(const CallLog::Entry &entry)
+{
+    auto *card = new QFrame(logListHost);
+    card->setStyleSheet(QString(
+                             "QFrame { background-color: %1; border: 1px solid %2; border-radius: 12px; }"
+                             ).arg(kBgCard, kBorder));
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(0);
+
+    auto *header = new ClickableFrame(card);
+    auto *headerLayout = new QHBoxLayout(header);
+    headerLayout->setContentsMargins(14, 12, 14, 12);
+    headerLayout->setSpacing(10);
+
+    auto *statusDot = new QLabel("●", header);
+    statusDot->setFixedWidth(12);
+    statusDot->setStyleSheet(QString("font-size: 10px; border: none; background: transparent; color: %1;")
+                                  .arg(entry.success ? kAccentGreen : kAccentRed));
+    headerLayout->addWidget(statusDot);
+
+    auto *timeLabel = new QLabel(entry.timestamp.toString("HH:mm:ss"), header);
+    timeLabel->setFixedWidth(56);
+    timeLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: 600; border: none; background: transparent;").arg(kTextMuted));
+    headerLayout->addWidget(timeLabel);
+
+    auto *kindBadge = new QLabel(entry.kind.isEmpty() ? "Диалог" : entry.kind, header);
+    kindBadge->setStyleSheet(QString(
+                                  "color: %1; font-size: 10px; font-weight: 700; border: 1px solid %2; border-radius: 8px; padding: 2px 8px; background: transparent;"
+                                  ).arg(kAccent, kBorder));
+    headerLayout->addWidget(kindBadge);
+
+    QFontMetrics fm(font());
+    const QString userPreview = entry.userText.simplified();
+    auto *previewLabel = new QLabel(fm.elidedText(userPreview.isEmpty() ? "(пусто)" : userPreview, Qt::ElideRight, 320), header);
+    previewLabel->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMain));
+    headerLayout->addWidget(previewLabel, 1);
+
+    const qint64 totalTok = entry.promptTokens + entry.completionTokens;
+    if (totalTok > 0) {
+        auto *tokensBadge = new QLabel(QString("%1 ток.").arg(totalTok), header);
+        tokensBadge->setStyleSheet(QString("color: %1; font-size: 11px; border: none; background: transparent;").arg(kTextMuted));
+        headerLayout->addWidget(tokensBadge);
+    }
+
+    auto *durationBadge = new QLabel(QString("%1 мс").arg(entry.durationMs), header);
+    durationBadge->setStyleSheet(QString("color: %1; font-size: 11px; border: none; background: transparent;").arg(kTextMuted));
+    headerLayout->addWidget(durationBadge);
+
+    auto *chevron = new QLabel("▸", header);
+    chevron->setFixedWidth(12);
+    chevron->setStyleSheet(QString("color: %1; font-size: 12px; border: none; background: transparent;").arg(kTextMuted));
+    headerLayout->addWidget(chevron);
+
+    cardLayout->addWidget(header);
+
+    // ---- Expandable details (hidden until the header is clicked) ----
+    auto *details = new QWidget(card);
+    details->setStyleSheet("background: transparent;");
+    auto *detailsLayout = new QVBoxLayout(details);
+    detailsLayout->setContentsMargins(14, 2, 14, 14);
+    detailsLayout->setSpacing(8);
+
+    auto *statsRow = new QHBoxLayout();
+    statsRow->setSpacing(16);
+    auto addStat = [&](const QString &label, const QString &value) {
+        auto *w = new QLabel(QString("%1: %2").arg(label, value), details);
+        w->setStyleSheet(QString("color: %1; font-size: 11px; border: none; background: transparent;").arg(kTextMuted));
+        statsRow->addWidget(w);
+    };
+    addStat("Агент", entry.agentName.isEmpty() ? "—" : entry.agentName);
+    addStat("Чат", QString::number(entry.chatId));
+    addStat("Промпт", QString::number(entry.promptTokens));
+    addStat("Ответ", QString::number(entry.completionTokens));
+    statsRow->addStretch(1);
+    detailsLayout->addLayout(statsRow);
+
+    if (entry.baselineHistoryTokensEst > 0) {
+        const qint64 saved = qMax<qint64>(0, entry.baselineHistoryTokensEst - entry.trimmedHistoryTokensEst);
+        auto *histLabel = new QLabel(
+            QString("История диалога: отправлено ~%1 ток. вместо ~%2 ток. без обрезки (сэкономлено ~%3 ток.)")
+                .arg(entry.trimmedHistoryTokensEst).arg(entry.baselineHistoryTokensEst).arg(saved),
+            details);
+        histLabel->setWordWrap(true);
+        histLabel->setStyleSheet(QString("color: %1; font-size: 11px; border: none; background: transparent;").arg(kAccentGreen));
+        detailsLayout->addWidget(histLabel);
+    }
+
+    auto addDetailBlock = [&](const QString &title, const QString &value, bool scrollable) {
+        if (value.trimmed().isEmpty())
+            return;
+        auto *blockTitle = new QLabel(title, details);
+        blockTitle->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: 700; border: none; background: transparent; margin-top: 4px;").arg(kTextMuted));
+        detailsLayout->addWidget(blockTitle);
+
+        if (scrollable) {
+            auto *blockText = new QPlainTextEdit(details);
+            blockText->setReadOnly(true);
+            blockText->setPlainText(value);
+            blockText->setFixedHeight(160);
+            QFont f("Menlo");
+            f.setPointSize(10);
+            blockText->setFont(f);
+            blockText->setStyleSheet(QString(
+                                          "QPlainTextEdit { background-color: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 6px; }"
+                                          ).arg(kBgInput, kTextMain, kBorder));
+            detailsLayout->addWidget(blockText);
+        } else {
+            auto *blockText = new QLabel(value, details);
+            blockText->setWordWrap(true);
+            blockText->setStyleSheet(QString(
+                                          "color: %1; font-size: 12px; border: none; background-color: %2; border-radius: 8px; padding: 8px;"
+                                          ).arg(kTextMain, kBgInput));
+            detailsLayout->addWidget(blockText);
+        }
+    };
+
+    addDetailBlock("Сообщение пользователя", entry.userText, false);
+    addDetailBlock("Ответ ИИ", entry.aiText, false);
+    addDetailBlock("Полный текст, отправленный модели", entry.fullPrompt, true);
+    addDetailBlock("Сырой ответ API", entry.rawResponse, true);
+
+    details->setVisible(false);
+    cardLayout->addWidget(details);
+
+    connect(header, &ClickableFrame::clicked, this, [details, chevron, header]() {
+        const bool show = !details->isVisible();
+        details->setVisible(show);
+        chevron->setText(show ? "▾" : "▸");
+        header->setSelected(show);
+    });
+
+    return card;
 }
 
 void MainWindow::switchTheme(const QString &themeName)
@@ -1417,6 +1690,8 @@ void MainWindow::performUiRebuild()
 
     if (activePage == 1)
         showSettings();
+    else if (activePage == 2)
+        showAnalytics();
 }
 
 void MainWindow::buildUi()
@@ -1439,6 +1714,7 @@ void MainWindow::buildUi()
     pageStack = new QStackedWidget(shell);
     pageStack->addWidget(buildMainView());
     pageStack->addWidget(buildSettingsPage());
+    pageStack->addWidget(buildAnalyticsPage());
     shellLayout->addWidget(pageStack, 1);
 
     auto *backdropLayout = new QVBoxLayout(backdrop);
@@ -1451,6 +1727,7 @@ void MainWindow::buildUi()
 
 void MainWindow::showSettings() { pageStack->setCurrentIndex(1); }
 void MainWindow::showMainView() { pageStack->setCurrentIndex(0); }
+void MainWindow::showAnalytics() { pageStack->setCurrentIndex(2); }
 
 QWidget *MainWindow::buildMainView()
 {
@@ -1651,12 +1928,25 @@ QWidget *MainWindow::buildSidebar()
     sep2->setStyleSheet(QString("background-color: %1; border: none; max-height: 1px;").arg(kBorder));
     layout->addWidget(sep2);
 
+    auto *bottomBar = new QHBoxLayout();
+    bottomBar->setSpacing(8);
+
+    analyticsEntryButton = new AnimatedIconButton("Σ", kTextMuted, kAccent, panel);
+    analyticsEntryButton->setFixedSize(36, 36);
+    analyticsEntryButton->setToolTip("Аналитика и журнал общения");
+    analyticsEntryButton->setStyleSheet(iconButtonStyle(kAccent, "rgba(137, 180, 250, 0.15)", 20, 16));
+    connect(analyticsEntryButton, &QPushButton::clicked, this, &MainWindow::showAnalytics);
+    bottomBar->addWidget(analyticsEntryButton, 0, Qt::AlignLeft);
+
     settingsEntryButton = new AnimatedIconButton("⚙", kTextMuted, kAccent, panel);
     settingsEntryButton->setFixedSize(36, 36);
     settingsEntryButton->setToolTip("Настройки приложения");
     settingsEntryButton->setStyleSheet(iconButtonStyle(kAccent, "rgba(137, 180, 250, 0.15)", 20, 16));
     connect(settingsEntryButton, &QPushButton::clicked, this, &MainWindow::showSettings);
-    layout->addWidget(settingsEntryButton, 0, Qt::AlignLeft);
+    bottomBar->addWidget(settingsEntryButton, 0, Qt::AlignLeft);
+    bottomBar->addStretch(1);
+
+    layout->addLayout(bottomBar);
 
     return panel;
 }
@@ -2502,10 +2792,37 @@ void MainWindow::receiveAgentReply(const QString &agentId, const QString &text)
     appendHistory(agentId, text, false);
 }
 
-void MainWindow::refreshTokenStatsLabel()
+void MainWindow::refreshTokenStatsCards()
 {
-    if (tokenStatsLabel)
-        tokenStatsLabel->setText(TokenStats::instance()->formatSummary());
+    const TokenStats::Snapshot s = TokenStats::instance()->snapshot();
+    if (statTotalTokensValue) statTotalTokensValue->setText(QString::number(s.totalTokens));
+    if (statCostValue) statCostValue->setText(QString("$%1").arg(QString::number(s.costSpentUsd, 'f', 4)));
+    if (statSavedTokensValue) statSavedTokensValue->setText(QString::number(s.savedTokensEst));
+    if (statSavedCostValue) statSavedCostValue->setText(QString("$%1").arg(QString::number(s.costSavedUsd, 'f', 4)));
+    if (statCallCountValue) statCallCountValue->setText(QString::number(s.callCount));
+}
+
+void MainWindow::addLogEntryToUi(const CallLog::Entry &entry)
+{
+    if (!logListLayout)
+        return;
+
+    if (logEmptyLabel) {
+        logEmptyLabel->deleteLater();
+        logEmptyLabel = nullptr;
+    }
+
+    logListLayout->insertWidget(0, buildLogEntryCard(entry));
+
+    constexpr int kMaxVisibleLogCards = 100;
+    while (logListLayout->count() > kMaxVisibleLogCards) {
+        QLayoutItem *item = logListLayout->takeAt(logListLayout->count() - 1);
+        if (item) {
+            if (item->widget())
+                item->widget()->deleteLater();
+            delete item;
+        }
+    }
 }
 
 void MainWindow::updateUptime()
